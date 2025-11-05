@@ -1,6 +1,346 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/backgroundColor"
+    tools:context=".ui.auth.DashboardActivity">
+
+    <!-- Google Map -->
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Summary Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/summaryCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="@color/surfaceColor"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/totalSensors"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primaryColor" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Total Sensors"
+                    android:textSize="12sp"
+                    android:textColor="@color/textSecondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/highRiskSensors"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#F44336" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="High Risk"
+                    android:textSize="12sp"
+                    android:textColor="@color/textSecondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/activeAlerts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#FF9800" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Active Alerts"
+                    android:textSize="12sp"
+                    android:textColor="@color/textSecondary" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Filter Chips -->
+    <HorizontalScrollView
+        android:id="@+id/filterScrollView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/summaryCard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/filterChipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All"
+                android:checked="true"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterLow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Low Risk"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medium Risk"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/filterHigh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="High Risk"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Menu Button -->
+    <ImageButton
+        android:id="@+id/btnMenu"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_menu_more"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Menu"
+        android:layout_margin="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Bottom Sheet -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bottomSheet"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:minHeight="200dp"
+        android:maxHeight="400dp"
+        android:background="@color/surfaceColor"
+        android:elevation="16dp"
+        android:padding="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:clipToPadding="false"
+        android:clipChildren="false">
+
+        <!-- Bottom Sheet Handle -->
+        <View
+            android:id="@+id/bottomSheetHandle"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:background="@color/textSecondary"
+            android:backgroundTint="@color/textSecondary"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/sensorName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Sensor Name"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/primaryColor"
+            app:layout_constraintTop_toBottomOf="@id/bottomSheetHandle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnFavorite" />
+
+        <ImageButton
+            android:id="@+id/btnFavorite"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/star_big_off"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Favorite"
+            app:layout_constraintTop_toBottomOf="@id/bottomSheetHandle"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/btnViewDetails"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="View Full Details"
+            android:backgroundTint="@color/primaryColor"
+            android:textColor="@color/buttonTextColor"
+            app:layout_constraintTop_toBottomOf="@id/sensorThreat"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/labelTilt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tilt:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/textPrimary"
+            app:layout_constraintTop_toBottomOf="@id/sensorName"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/sensorTilt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="0°"
+            android:textColor="@color/textPrimary"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/sensorName"
+            app:layout_constraintStart_toEndOf="@id/labelTilt"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="8dp" />
+
+        <TextView
+            android:id="@+id/labelSoil"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Soil Moisture:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/textPrimary"
+            app:layout_constraintTop_toBottomOf="@id/labelTilt"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/sensorSoil"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textColor="@color/textPrimary"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/sensorTilt"
+            app:layout_constraintStart_toEndOf="@id/labelSoil"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="8dp" />
+
+        <TextView
+            android:id="@+id/labelRain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rainfall:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/textPrimary"
+            app:layout_constraintTop_toBottomOf="@id/labelSoil"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/sensorRain"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="0 mm"
+            android:textColor="@color/textPrimary"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/sensorSoil"
+            app:layout_constraintStart_toEndOf="@id/labelRain"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="8dp" />
+
+        <TextView
+            android:id="@+id/labelThreat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Threat Level:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/textPrimary"
+            app:layout_constraintTop_toBottomOf="@id/labelRain"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/sensorThreat"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Low"
+            android:textColor="@color/primaryColor"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/sensorRain"
+            app:layout_constraintStart_toEndOf="@id/labelThreat"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="8dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

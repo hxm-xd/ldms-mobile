@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nature-themed Night mode -->
+    <color name="primaryColor">#A5D6A7</color>        <!-- Light green for highlights -->
+    <color name="accentColor">#66BB6A</color>         <!-- Muted green accent -->
+    <color name="backgroundColor">#1B2620</color>     <!-- Dark forest green -->
+    <color name="surfaceColor">#2E3B30</color>        <!-- Dark card background -->
+    <color name="textPrimary">#E8F5E9</color>         <!-- Light green / off-white text -->
+    <color name="textSecondary">#A5D6A7</color>       <!-- Muted green for secondary text -->
+    <color name="buttonColor">#388E3C</color>         <!-- Dark green button -->
+    <color name="buttonTextColor">#FFFFFF</color>     <!-- Button text -->
+    <color name="white">#FFFFFF</color>               <!-- White color -->
+</resources>

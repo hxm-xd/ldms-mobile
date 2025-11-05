@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Nature-themed colors -->
+    <color name="primaryColor">#2E7D32</color>        <!-- Dark Green -->
+    <color name="accentColor">#81C784</color>         <!-- Light Green -->
+    <color name="backgroundColor">#F1F8E9</color>     <!-- Soft green/cream -->
+    <color name="surfaceColor">#FFFFFF</color>        <!-- Card background -->
+    <color name="textPrimary">#1B5E20</color>         <!-- Darker green for text -->
+    <color name="textSecondary">#4E7D57</color>       <!-- Muted green for secondary text -->
+    <color name="buttonColor">#388E3C</color>         <!-- Medium green button -->
+    <color name="buttonTextColor">#FFFFFF</color>     <!-- Button text -->
+    <color name="white">#FFFFFF</color>               <!-- White color -->
 </resources>

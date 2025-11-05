@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "271751066933",
+    "firebase_url": "https://ldms-4f84d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "ldms-4f84d",
+    "storage_bucket": "ldms-4f84d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:271751066933:android:1bee40ef13fd6953ca887c",
+        "android_client_info": {
+          "package_name": "com.example.mad_cw"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHf6DKni2GYTGumPelmqKOh52KvHMQui0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

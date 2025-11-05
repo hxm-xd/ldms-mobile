@@ -1,5 +1,7 @@
 package com.example.mad_cw.data.model
 
+import java.io.Serializable
+
 class SensorData(
     val nodeName: String? = null,
     val accelX: Double? = null,
@@ -18,7 +20,7 @@ class SensorData(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val timestamp: String? = null,
-    val status: String? = null) {
+    val status: String? = null) : Serializable {
 
 
 }

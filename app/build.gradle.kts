@@ -44,7 +44,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
@@ -53,20 +52,38 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation(libs.material)
+    implementation(libs.material) // This is enough
     testImplementation(libs.junit)
 
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
 
+    // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
 
+    // Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
 
+    // UI Components
     implementation("androidx.cardview:cardview:1.0.0")
-
+    implementation("com.google.android.material:material:1.10.0")
+    
+    // Charts
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    
+    // RecyclerView for lists
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    
+    // Lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 }
+
 
