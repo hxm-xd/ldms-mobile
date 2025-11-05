@@ -3,18 +3,33 @@ package com.example.mad_cw
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import com.google.firebase.FirebaseApp
+import com.google.firebase.database.FirebaseDatabase
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        try {
+            val app = FirebaseApp.initializeApp(this)
+            if (app == null) {
+                Log.e("FirebaseStatus", "❌ Firebase not initialized! Check google-services.json or plugin.")
+            } else {
+                Log.d("FirebaseStatus", "✅ Firebase initialized successfully: ${app.name}")
+                // Optional: write test data to database
+                val db = FirebaseDatabase.getInstance().reference
+                db.child("test_connection").setValue("Firebase is working!")
+                    .addOnSuccessListener {
+                        Log.d("FirebaseStatus", "✅ Data written successfully.")
+                    }
+                    .addOnFailureListener {
+                        Log.e("FirebaseStatus", "❌ Failed to write data: ${it.message}")
+                    }
+            }
+        } catch (e: Exception) {
+            Log.e("FirebaseStatus", "❌ Exception during Firebase init: ${e.message}")
         }
     }
 }
