@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.mad_cw.R
-import com.example.mad_cw.ui.auth.DashboardActivity
+import com.example.mad_cw.ui.dashboard.DashboardActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 

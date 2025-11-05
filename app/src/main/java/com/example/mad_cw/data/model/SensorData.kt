@@ -1,8 +1,10 @@
 package com.example.mad_cw.data.model
 
+import com.google.firebase.database.IgnoreExtraProperties
 import java.io.Serializable
 
-class SensorData(
+@IgnoreExtraProperties
+data class SensorData(
     val nodeName: String? = null,
     val accelX: Double? = null,
     val accelY: Double? = null,
@@ -20,7 +22,8 @@ class SensorData(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val timestamp: String? = null,
-    val status: String? = null) : Serializable {
-
-
+    val status: String? = null
+) : Serializable {
+    // No-arg constructor for Firebase
+    constructor() : this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
 }

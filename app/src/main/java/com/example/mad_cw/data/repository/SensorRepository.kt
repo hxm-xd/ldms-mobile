@@ -33,7 +33,7 @@ class SensorRepository {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e("SensorRepository","Firebase error $(error.message)")
+                Log.e("SensorRepository","Firebase error ${error.message}")
             }
         })
     }

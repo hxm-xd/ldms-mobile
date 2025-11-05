@@ -112,13 +112,13 @@
 
             <!-- Sign Up Button -->
             <Button
-                android:id="@+id/btnSignUp"
+                android:id="@+id/btnSignUpRedirect"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Sign Up"
                 android:backgroundTint="@color/primaryColor"
-                android:textColor="@color/buttonTextColor"
-                android:layout_marginBottom="12dp"/>
+                android:textColor="@color/buttonTextColor"/>
+
 
             <!-- Redirect to Login -->
             <Button
