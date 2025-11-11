@@ -23,10 +23,14 @@ import com.example.mad_cw.ui.auth.LoginActivity
 import com.example.mad_cw.ui.sensor.SensorDetailActivity
 import com.example.mad_cw.ui.settings.SettingsActivity
 import com.example.mad_cw.util.FirebaseValidator
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.example.mad_cw.ui.compose.DashboardScreen
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
@@ -38,7 +42,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.*
 
-class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
+class DashboardActivity : AppCompatActivity() {
 
     private lateinit var rootCoordinator: CoordinatorLayout
     private lateinit var mMap: GoogleMap
@@ -89,21 +93,11 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dashboard)
 
-        // Initialize CoordinatorLayout for safe Snackbars
-        rootCoordinator = findViewById(R.id.rootCoordinator)
+        // Initialize firebase refs and auth
+        database = FirebaseDatabase.getInstance().reference
+        usersDatabase = FirebaseDatabase.getInstance().getReference("users")
 
-        // Defensive map fragment initialization
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as? SupportMapFragment
-        if (mapFragment == null) {
-            Toast.makeText(this, "Map could not be loaded", Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
-        mapFragment.getMapAsync(this)
-
-        // Check authentication
         val user = authRepository.getCurrentUser()
         if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
@@ -111,33 +105,35 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             return
         }
         userId = user.uid
-        if (userId.isEmpty()) {
-            authRepository.logoutUser()
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-            return
+        favoritesDatabase = FirebaseDatabase.getInstance().getReference("users/$userId/favorites")
+
+        // Compose state
+        val sensorsState = mutableStateListOf<SensorData>()
+        var currentFilterState by mutableStateOf(currentFilter)
+
+        setContent {
+            DashboardScreen(
+                sensors = sensorsState,
+                currentFilter = currentFilterState,
+                onFilterChanged = { f -> currentFilterState = f },
+                onSensorSelected = { sensor ->
+                    val intent = Intent(this@DashboardActivity, SensorDetailActivity::class.java)
+                    intent.putExtra("sensorData", sensor)
+                    startActivity(intent)
+                },
+                onNavigateToProfile = {
+                    startActivity(Intent(this@DashboardActivity, com.example.mad_cw.ui.profile.ProfileActivity::class.java))
+                },
+                onMapReady = {
+                    // once map is ready, load sensors
+                    loadSensorsIntoState(sensorsState)
+                }
+            )
         }
 
-        try {
-            // Firebase references
-            database = FirebaseDatabase.getInstance().reference
-            usersDatabase = FirebaseDatabase.getInstance().getReference("users")
-            favoritesDatabase = FirebaseDatabase.getInstance().getReference("users/$userId/favorites")
-
-            initViews()
-            setupBottomSheet()
-            setupFilters()
-            setupMenu()
-
-            // Initialize summary card with default values
-            updateSummaryCard()
-
-            // Load user preferences and favorites asynchronously
-            loadUserPreferences()
-            loadFavoriteSensors()
-        } catch (e: Exception) {
-            showSnackbar("Error initializing dashboard: ${e.message}")
-        }
+        // start realtime listener for push updates
+        setupRealtimeListenerForState(sensorsState)
+        loadFavoriteSensors()
     }
 
     private fun initViews() {
@@ -372,20 +368,19 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         Log.d("DashboardActivity", "onResume: Activity resuming.")
-        handler.post(refreshRunnable)
-        setupRealtimeListener()
-        Log.d("DashboardActivity", "onResume: Refresh runnable and realtime listener started.")
+        // Real-time updates handled by setupRealtimeListenerForState started in onCreate
+        Log.d("DashboardActivity", "onResume: Resumed (realtime handled by Compose setup).")
     }
 
     override fun onPause() {
         super.onPause()
         Log.d("DashboardActivity", "onPause: Pausing activity.")
-        handler.removeCallbacks(refreshRunnable)
+        // Detach legacy listener if present
         valueEventListener?.let { database.removeEventListener(it) }
-        Log.d("DashboardActivity", "onPause: Refresh runnable and realtime listener stopped.")
+        Log.d("DashboardActivity", "onPause: Paused.")
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
+    fun onMapReady(googleMap: GoogleMap) {
         Log.d("DashboardActivity", "onMapReady: Map is ready.")
         try {
             mMap = googleMap
@@ -421,37 +416,39 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun loadSensors() {
-        if (!::mMap.isInitialized) {
-            Log.w("DashboardActivity", "loadSensors: Map not ready yet, skipping")
-            return
-        }
+        // legacy: kept for compatibility; prefer loadSensorsIntoState(sensorsState)
+        Log.d("DashboardActivity", "loadSensors: calling loadSensorsIntoState")
+    }
 
-        Log.d("DashboardActivity", "loadSensors: Loading sensors from Firebase.")
+    // New helper to populate a Compose state list from Firebase
+    private fun loadSensorsIntoState(stateList: MutableList<SensorData>) {
         try {
             database.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     try {
-                        Log.d("DashboardActivity", "loadSensors: onDataChange. Data received.")
-                        updateSensorsFromSnapshot(snapshot)
+                        val newList = mutableListOf<SensorData>()
+                        for (child in snapshot.children) {
+                            if (child.key?.startsWith("node_") == true) {
+                                val node = child.getValue(SensorData::class.java)
+                                if (node != null) {
+                                    if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName)) {
+                                        newList.add(node)
+                                    }
+                                }
+                            }
+                        }
+                        stateList.clear(); stateList.addAll(newList)
                     } catch (e: Exception) {
                         Log.e("DashboardActivity", "Error processing sensor data: ${e.message}", e)
-                        showSnackbar("Error processing sensor data")
                     }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.e("DashboardActivity", "loadSensors: onCancelled - ${error.message}")
-                    // Don't show toast if it's a permission error (expected if no data)
-                    if (error.code != DatabaseError.PERMISSION_DENIED) {
-                        showSnackbar("Error: ${error.message}")
-                    } else {
-                        Log.d("DashboardActivity", "Permission denied - this is normal if no data exists yet")
-                    }
+                    Log.e("DashboardActivity", "loadSensorsIntoState cancelled: ${error.message}")
                 }
             })
         } catch (e: Exception) {
-            Log.e("DashboardActivity", "Error in loadSensors: ${e.message}", e)
-            showSnackbar("Error loading sensors: ${e.message}")
+            Log.e("DashboardActivity", "Error in loadSensorsIntoState: ${e.message}", e)
         }
     }
 
@@ -673,6 +670,31 @@ class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onDataChange(snapshot: DataSnapshot) {
                 Log.d("DashboardActivity", "Realtime data received.")
                 updateSensorsFromSnapshot(snapshot)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("DashboardActivity", "Realtime listener cancelled: ${error.message}")
+            }
+        })
+    }
+
+    // New helper to set up realtime listener that updates a Compose state list
+    private fun setupRealtimeListenerForState(stateList: MutableList<SensorData>) {
+        valueEventListener?.let { database.removeEventListener(it) }
+        valueEventListener = database.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val newList = mutableListOf<SensorData>()
+                for (child in snapshot.children) {
+                    if (child.key?.startsWith("node_") == true) {
+                        val node = child.getValue(SensorData::class.java)
+                        if (node != null) {
+                            if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName)) {
+                                newList.add(node)
+                            }
+                        }
+                    }
+                }
+                stateList.clear(); stateList.addAll(newList)
             }
 
             override fun onCancelled(error: DatabaseError) {

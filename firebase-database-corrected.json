@@ -1,0 +1,76 @@
+{
+  "node_1": {
+    "accelX": 0.1,
+    "accelY": 0.2,
+    "accelZ": 9.8,
+    "gyroX": 0.0,
+    "gyroY": 0.0,
+    "gyroZ": 0.0,
+    "magX": 0.0,
+    "magY": 0.0,
+    "magZ": 0.0,
+    "tilt": 5.0,
+    "rain": 15.0,
+    "soilMoisture": 45.0,
+    "light": 500.0,
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "name": "Sensor Node 1",
+    "status": "active",
+    "timestamp": "2024-01-15T10:30:00Z"
+  },
+  "node_2": {
+    "accelX": 0.2,
+    "accelY": 0.1,
+    "accelZ": 9.7,
+    "gyroX": 0.1,
+    "gyroY": 0.0,
+    "gyroZ": 0.0,
+    "magX": 0.0,
+    "magY": 0.0,
+    "magZ": 0.0,
+    "tilt": 15.0,
+    "rain": 35.0,
+    "soilMoisture": 75.0,
+    "light": 200.0,
+    "latitude": 37.7849,
+    "longitude": -122.4094,
+    "name": "Sensor Node 2",
+    "status": "warning",
+    "timestamp": "2024-01-15T10:31:00Z"
+  },
+  "node_3": {
+    "accelX": 0.5,
+    "accelY": 0.3,
+    "accelZ": 9.5,
+    "gyroX": 0.2,
+    "gyroY": 0.1,
+    "gyroZ": 0.0,
+    "magX": 0.0,
+    "magY": 0.0,
+    "magZ": 0.0,
+    "tilt": 35.0,
+    "rain": 60.0,
+    "soilMoisture": 90.0,
+    "light": 50.0,
+    "latitude": 37.7649,
+    "longitude": -122.4294,
+    "name": "Sensor Node 3",
+    "status": "critical",
+    "timestamp": "2024-01-15T10:32:00Z"
+  },
+  "users": {
+    "example_user_id": {
+      "email": "user@example.com",
+      "favorites": {
+        "node_1": true,
+        "node_2": true
+      },
+      "assignedSensors": {
+        "node_1": true,
+        "node_2": true,
+        "node_3": true
+      }
+    }
+  }
+}

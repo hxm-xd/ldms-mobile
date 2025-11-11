@@ -33,6 +33,7 @@ android {
     }
     buildFeatures{
         viewBinding = true
+        compose = true
     }
     compileOptions{
         sourceCompatibility = JavaVersion.VERSION_11
@@ -40,6 +41,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 }
 
@@ -85,6 +90,13 @@ dependencies {
     
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+
+    // Jetpack Compose
+    implementation("androidx.activity:activity-compose:1.8.0")
+    implementation("androidx.compose.ui:ui:1.5.3")
+    implementation("androidx.compose.material:material:1.5.0")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.5.3")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.5.3")
 }
 
 
