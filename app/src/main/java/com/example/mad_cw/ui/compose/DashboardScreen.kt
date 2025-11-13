@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -81,6 +82,7 @@ fun DashboardScreen(
     currentFilter: String,
     onFilterChanged: (String) -> Unit,
     onSensorSelected: (SensorData) -> Unit,
+    onNavigateToNearby: () -> Unit = {},
     onNavigateToProfile: () -> Unit,
     onMapReady: (() -> Unit)? = null,
     selectedSensor: SensorData?,
@@ -231,6 +233,8 @@ fun DashboardScreen(
                             }
                         }
                     }
+                    // Divider kept out if needed for visual separation
+                    Divider()
                 }
             }
 
@@ -359,6 +363,22 @@ fun DashboardScreen(
                 }, backgroundColor = MaterialTheme.colors.primary) {
                     Icon(Icons.Filled.MyLocation, contentDescription = "Recenter", tint = MaterialTheme.colors.onPrimary)
                 }
+            }
+
+            // Nearby extended FAB at bottom-start (opposite the refresh/recenter controls)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 5.dp, bottom = 110.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                androidx.compose.material.ExtendedFloatingActionButton(
+                    text = { Text("Nearby (1km)") },
+                    icon = { Icon(Icons.Filled.MyLocation, contentDescription = null) },
+                    onClick = { onNavigateToNearby() },
+                    backgroundColor = MaterialTheme.colors.primary,
+                    contentColor = MaterialTheme.colors.onPrimary
+                )
             }
         }
     }

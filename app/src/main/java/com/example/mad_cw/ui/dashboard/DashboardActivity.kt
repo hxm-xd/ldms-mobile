@@ -109,6 +109,17 @@ class DashboardActivity : AppCompatActivity() {
                     intent.putExtra("sensorData", sensor)
                     startActivity(intent)
                 },
+                onNavigateToNearby = {
+                    val loc = lastKnownLocationState
+                    if (loc != null) {
+                        val i = Intent(this@DashboardActivity, com.example.mad_cw.ui.nearby.NearbySensorsActivity::class.java)
+                        i.putExtra("user_lat", loc.latitude)
+                        i.putExtra("user_lng", loc.longitude)
+                        startActivity(i)
+                    } else {
+                        showSnackbar("Location not available")
+                    }
+                },
                 onNavigateToProfile = {
                     startActivity(
                         Intent(
