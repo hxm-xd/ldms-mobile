@@ -68,6 +68,7 @@ class DashboardActivity : AppCompatActivity() {
         val sensorsState = mutableStateListOf<SensorData>()
         var currentFilterState by mutableStateOf(currentFilter)
         var selectedSensorState by mutableStateOf<SensorData?>(null)
+        var selectedSensorName: String? = null
         var favoritesState by mutableStateOf<Set<String>>(emptySet())
 
         // Functions to mutate favorites in Firebase and update Compose state
@@ -103,7 +104,10 @@ class DashboardActivity : AppCompatActivity() {
                     loadSensorsIntoState(sensorsState)
                 },
                 selectedSensor = selectedSensorState,
-                onSelectedChange = { s -> selectedSensorState = s },
+                onSelectedChange = { s ->
+                    selectedSensorState = s
+                    selectedSensorName = s?.nodeName
+                },
                 favorites = favoritesState,
                 onToggleFavorite = { name -> toggleFavoriteCompose(name) }
                 )
@@ -111,7 +115,16 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         // start realtime listener for push updates
-        setupRealtimeListenerForState(sensorsState)
+        setupRealtimeListenerForState(sensorsState) { updatedList ->
+            // Keep the bottom sheet's selected sensor fresh
+            val name = selectedSensorName
+            if (name != null) {
+                val refreshed = updatedList.find { it.nodeName == name }
+                if (refreshed != null) {
+                    selectedSensorState = refreshed
+                }
+            }
+        }
         loadFavoriteSensorsCompose { newSet -> favoritesState = newSet }
     }
 
@@ -311,7 +324,10 @@ class DashboardActivity : AppCompatActivity() {
     // Legacy realtime listener removed; using setupRealtimeListenerForState for Compose
 
     // New helper to set up realtime listener that updates a Compose state list
-    private fun setupRealtimeListenerForState(stateList: MutableList<SensorData>) {
+    private fun setupRealtimeListenerForState(
+        stateList: MutableList<SensorData>,
+        onUpdated: ((List<SensorData>) -> Unit)? = null
+    ) {
         valueEventListener?.let { database.removeEventListener(it) }
         valueEventListener = database.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -327,6 +343,7 @@ class DashboardActivity : AppCompatActivity() {
                     }
                 }
                 stateList.clear(); stateList.addAll(newList)
+                onUpdated?.invoke(newList)
             }
 
             override fun onCancelled(error: DatabaseError) {

@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.example.mad_cw.data.model.SensorData
 import com.example.mad_cw.ui.compose.SensorDetailScreen
+import com.example.mad_cw.ui.theme.LDMSTheme
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -42,8 +43,10 @@ class SensorDetailActivity : AppCompatActivity() {
         nodeName = sensorData.nodeName
 
         setContent {
-            SensorDetailScreen(initial = sensorData, updates = state) {
-                finish()
+            LDMSTheme {
+                SensorDetailScreen(initial = sensorData, updates = state) {
+                    finish()
+                }
             }
         }
 
