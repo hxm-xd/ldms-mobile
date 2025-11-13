@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottomSheetSensor"
     android:layout_width="match_parent"
@@ -18,7 +17,7 @@
         android:layout_gravity="center"
         android:layout_marginBottom="12dp"
         android:backgroundTint="@color/primaryColor"
-        android:radius="2dp"/>
+        android:radius="2dp" />
 
     <!-- Sensor Name -->
     <TextView
@@ -29,7 +28,7 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/textPrimary"
-        android:layout_marginBottom="8dp"/>
+        android:layout_marginBottom="8dp" />
 
     <!-- Sensor Coordinates -->
     <TextView
@@ -38,7 +37,7 @@
         android:layout_height="wrap_content"
         android:text="Lat: 0.0, Lon: 0.0"
         android:textColor="@color/textSecondary"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp" />
 
     <!-- Sensor Readings -->
     <LinearLayout
@@ -52,7 +51,7 @@
             android:layout_height="wrap_content"
             android:text="Accel X: 0.0, Y: 0.0, Z: 0.0"
             android:textColor="@color/textPrimary"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp" />
 
         <TextView
             android:id="@+id/tvTilt"
@@ -60,7 +59,7 @@
             android:layout_height="wrap_content"
             android:text="Tilt: 0°"
             android:textColor="@color/textPrimary"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp" />
 
         <TextView
             android:id="@+id/tvRain"
@@ -68,7 +67,7 @@
             android:layout_height="wrap_content"
             android:text="Rain: 0 mm"
             android:textColor="@color/textPrimary"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp" />
 
         <TextView
             android:id="@+id/tvSoilMoisture"
@@ -76,7 +75,7 @@
             android:layout_height="wrap_content"
             android:text="Soil Moisture: 0%"
             android:textColor="@color/textPrimary"
-            android:layout_marginBottom="12dp"/>
+            android:layout_marginBottom="12dp" />
     </LinearLayout>
 
     <!-- Threat Level -->
@@ -89,6 +88,6 @@
         android:textStyle="bold"
         android:textSize="18sp"
         android:layout_marginTop="8dp"
-        android:gravity="center"/>
+        android:gravity="center" />
 
 </LinearLayout>

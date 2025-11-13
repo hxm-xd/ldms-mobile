@@ -1,14 +1,12 @@
 package com.example.mad_cw.ui.dashboard
 
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,12 +16,14 @@ import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.auth.LoginActivity
 import com.example.mad_cw.ui.compose.DashboardScreen
 import com.example.mad_cw.ui.sensor.SensorDetailActivity
-import com.example.mad_cw.util.FirebaseValidator
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
-import com.google.firebase.database.*
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -52,7 +52,7 @@ class DashboardActivity : AppCompatActivity() {
 
         // Initialize firebase refs and auth
         database = FirebaseDatabase.getInstance().reference
-    usersDatabase = FirebaseDatabase.getInstance().getReference("users")
+        usersDatabase = FirebaseDatabase.getInstance().getReference("users")
 
         val user = authRepository.getCurrentUser()
         if (user == null) {
@@ -79,7 +79,8 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         setContent {
-            DashboardScreen(
+            MaterialTheme {
+                DashboardScreen(
                 sensors = sensorsState,
                 currentFilter = currentFilterState,
                 onFilterChanged = { f -> currentFilterState = f },
@@ -89,7 +90,12 @@ class DashboardActivity : AppCompatActivity() {
                     startActivity(intent)
                 },
                 onNavigateToProfile = {
-                    startActivity(Intent(this@DashboardActivity, com.example.mad_cw.ui.profile.ProfileActivity::class.java))
+                    startActivity(
+                        Intent(
+                            this@DashboardActivity,
+                            com.example.mad_cw.ui.profile.ProfileActivity::class.java
+                        )
+                    )
                 },
                 onMapReady = {
                     // once map is ready, load sensors
@@ -99,12 +105,13 @@ class DashboardActivity : AppCompatActivity() {
                 onSelectedChange = { s -> selectedSensorState = s },
                 favorites = favoritesState,
                 onToggleFavorite = { name -> toggleFavoriteCompose(name) }
-            )
+                )
+            }
         }
 
         // start realtime listener for push updates
-    setupRealtimeListenerForState(sensorsState)
-    loadFavoriteSensorsCompose { newSet -> favoritesState = newSet }
+        setupRealtimeListenerForState(sensorsState)
+        loadFavoriteSensorsCompose { newSet -> favoritesState = newSet }
     }
 
     // initViews, view-binding and click handlers removed - Compose manages the UI now
@@ -163,7 +170,10 @@ class DashboardActivity : AppCompatActivity() {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e("DashboardActivity", "loadFavoriteSensorsCompose: onCancelled: ${error.message}")
+                Log.e(
+                    "DashboardActivity",
+                    "loadFavoriteSensorsCompose: onCancelled: ${error.message}"
+                )
             }
         })
     }
@@ -205,7 +215,10 @@ class DashboardActivity : AppCompatActivity() {
                             if (child.key?.startsWith("node_") == true) {
                                 val node = child.getValue(SensorData::class.java)
                                 if (node != null) {
-                                    if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName)) {
+                                    if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(
+                                            node.nodeName
+                                        )
+                                    ) {
                                         newList.add(node)
                                     }
                                 }
@@ -228,7 +241,8 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun updateSensorsFromSnapshot(snapshot: DataSnapshot) {
         Log.d("DashboardActivity", "updateSensorsFromSnapshot: Updating sensors from snapshot")
-        val previousHighRiskSensors = allSensors.filter { getThreatLevel(it) == "High" }.map { it.nodeName }.toSet()
+        val previousHighRiskSensors =
+            allSensors.filter { getThreatLevel(it) == "High" }.map { it.nodeName }.toSet()
         allSensors.clear()
         for (child in snapshot.children) {
             // Only process children that are sensor nodes (e.g., "node_1")
@@ -254,10 +268,13 @@ class DashboardActivity : AppCompatActivity() {
         if (newHighRiskSensors.isNotEmpty()) {
             // In a real implementation, you would send FCM notifications here
             // For now, we'll just log it
-            android.util.Log.d("DashboardActivity", "New high-risk sensors detected: $newHighRiskSensors")
+            android.util.Log.d(
+                "DashboardActivity",
+                "New high-risk sensors detected: $newHighRiskSensors"
+            )
         }
 
-    // Summary card now driven by Compose; legacy map update removed
+        // Summary card now driven by Compose; legacy map update removed
 
         // Update bottom sheet if sensor is selected
         selectedSensor?.let { sensor ->

@@ -6,14 +6,14 @@ import com.google.firebase.auth.FirebaseUser
 class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
 
-    fun loginUser(email: String, password: String, onResult: (Boolean, String?) -> Unit){
+    fun loginUser(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener {
-                    task -> if(task.isSuccessful) {
-                onResult(true, null)
-            } else{
-                onResult(false, task.exception?.message)
-            }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception?.message)
+                }
             }
     }
 
@@ -21,10 +21,16 @@ class AuthRepository {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    android.util.Log.d("AuthRepository", "User registered successfully: ${auth.currentUser?.uid}")
+                    android.util.Log.d(
+                        "AuthRepository",
+                        "User registered successfully: ${auth.currentUser?.uid}"
+                    )
                     onResult(true, null)
                 } else {
-                    android.util.Log.e("AuthRepository", "Registration failed: ${task.exception?.message}")
+                    android.util.Log.e(
+                        "AuthRepository",
+                        "Registration failed: ${task.exception?.message}"
+                    )
                     onResult(false, task.exception?.message)
                 }
             }
@@ -34,7 +40,7 @@ class AuthRepository {
         return auth.currentUser
     }
 
-    fun logoutUser(){
+    fun logoutUser() {
         auth.signOut()
     }
 }

@@ -5,14 +5,14 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Switch
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.activity.compose.setContent
-import com.example.mad_cw.ui.compose.SettingsScreen
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.mad_cw.R
 import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.auth.LoginActivity
+import com.example.mad_cw.ui.compose.SettingsScreen
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -30,33 +30,33 @@ class SettingsActivity : AppCompatActivity() {
             SettingsScreen(onBack = { finish() })
         }
     }
-    
+
     private fun initViews() {
         tvEmail = findViewById(R.id.tvEmail)
         tvUserId = findViewById(R.id.tvUserId)
         switchNotifications = findViewById(R.id.switchNotifications)
         switchDarkMode = findViewById(R.id.switchDarkMode)
     }
-    
+
     private fun loadSettings() {
         val user = authRepository.getCurrentUser()
         tvEmail.text = user?.email ?: "Not logged in"
         tvUserId.text = user?.uid ?: "N/A"
-        
+
         // Load notification preference
         val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
         switchNotifications.isChecked = notificationsEnabled
-        
+
         // Load dark mode preference
         val darkModeEnabled = prefs.getBoolean("dark_mode_enabled", false)
         switchDarkMode.isChecked = darkModeEnabled
         applyDarkMode(darkModeEnabled)
     }
-    
+
     private fun setupClickListeners() {
         // Logic moved into Compose SettingsScreen
     }
-    
+
     private fun applyDarkMode(enabled: Boolean) {
         if (enabled) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -64,7 +64,7 @@ class SettingsActivity : AppCompatActivity() {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
-    
+
     private fun showLogoutDialog() {
         // Kept for code compatibility; Compose shows its own dialog
         AlertDialog.Builder(this)
@@ -80,7 +80,7 @@ class SettingsActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     override fun onSupportNavigateUp(): Boolean {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             finish()

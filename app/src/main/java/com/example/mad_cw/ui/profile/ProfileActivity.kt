@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material.MaterialTheme
 import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.compose.ProfileScreen
 
@@ -13,10 +14,17 @@ class ProfileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ProfileScreen(authRepository = authRepository, onNavigateToDashboard = {
-                startActivity(Intent(this, com.example.mad_cw.ui.dashboard.DashboardActivity::class.java))
-                finish()
-            })
+            MaterialTheme {
+                ProfileScreen(authRepository = authRepository, onNavigateToDashboard = {
+                    startActivity(
+                        Intent(
+                            this,
+                            com.example.mad_cw.ui.dashboard.DashboardActivity::class.java
+                        )
+                    )
+                    finish()
+                })
+            }
         }
     }
 }

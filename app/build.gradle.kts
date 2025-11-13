@@ -31,11 +31,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures{
+    buildFeatures {
         viewBinding = true
         compose = true
     }
-    compileOptions{
+    compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -77,17 +77,17 @@ dependencies {
     // UI Components
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.google.android.material:material:1.10.0")
-    
+
     // Charts
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-    
+
     // RecyclerView for lists
     implementation("androidx.recyclerview:recyclerview:1.3.2")
-    
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    
+
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 

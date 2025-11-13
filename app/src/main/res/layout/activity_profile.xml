@@ -30,7 +30,7 @@
             app:layout_constraintTop_toTopOf="@+id/avatar"
             app:layout_constraintStart_toEndOf="@+id/avatar"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginStart="12dp"/>
+            android:layout_marginStart="12dp" />
 
         <TextView
             android:id="@+id/tvEmail"
@@ -40,7 +40,7 @@
             app:layout_constraintTop_toBottomOf="@+id/tvName"
             app:layout_constraintStart_toStartOf="@+id/tvName"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilDisplayName"
@@ -55,7 +55,7 @@
                 android:id="@+id/inputDisplayName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Display name"/>
+                android:hint="Display name" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
@@ -66,7 +66,7 @@
             app:layout_constraintTop_toBottomOf="@id/tilDisplayName"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginTop="16dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -78,7 +78,6 @@
         android:background="@color/surfaceColor"
         app:menu="@menu/bottom_nav"
         app:itemIconTint="@color/primaryColor"
-        app:itemTextColor="@color/textPrimary"
-        />
+        app:itemTextColor="@color/textPrimary" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

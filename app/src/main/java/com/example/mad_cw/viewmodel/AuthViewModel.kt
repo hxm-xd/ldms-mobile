@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.example.mad_cw.data.repository.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 
-class AuthViewModel : ViewModel(){
+class AuthViewModel : ViewModel() {
 
     private val repository = AuthRepository()
 
@@ -22,8 +22,8 @@ class AuthViewModel : ViewModel(){
     private val _currentUser = MutableLiveData<FirebaseUser?>()
     val currentUser: LiveData<FirebaseUser?> = _currentUser
 
-    fun login(email: String, password: String){
-        repository.loginUser(email, password){ success, error ->
+    fun login(email: String, password: String) {
+        repository.loginUser(email, password) { success, error ->
             _loginResult.value = success
             _errorMessage.value = error
             if (success) {
@@ -32,7 +32,7 @@ class AuthViewModel : ViewModel(){
         }
     }
 
-    fun register(email: String, password: String){
+    fun register(email: String, password: String) {
         repository.registerUser(email, password) { success, error ->
             _registerResult.value = success
             _errorMessage.value = error
@@ -42,12 +42,12 @@ class AuthViewModel : ViewModel(){
         }
     }
 
-    fun logout(){
+    fun logout() {
         repository.logoutUser()
         _currentUser.value = null
     }
 
-    fun getCurrentUser(){
+    fun getCurrentUser() {
         _currentUser.value = repository.getCurrentUser()
     }
 }

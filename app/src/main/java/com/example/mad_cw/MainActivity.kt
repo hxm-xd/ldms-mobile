@@ -9,7 +9,7 @@ import com.example.mad_cw.ui.auth.LoginActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Simply navigate to LoginActivity
         // LoginActivity will check if user is already logged in
         Log.d("MainActivity", "Starting LoginActivity")

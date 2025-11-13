@@ -7,13 +7,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.example.mad_cw.data.model.SensorData
 import com.example.mad_cw.ui.compose.SensorDetailScreen
-import com.google.firebase.database.*
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SensorDetailActivity : AppCompatActivity() {
     private lateinit var database: DatabaseReference
     private var valueEventListener: ValueEventListener? = null
+
     // hold state so realtime updates can modify it from other methods
     private val state = mutableStateOf<SensorData?>(null)
     private var nodeName: String? = null
@@ -22,11 +27,12 @@ class SensorDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         @Suppress("DEPRECATION")
-        val sensorData = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra("sensorData", SensorData::class.java)
-        } else {
-            intent.getSerializableExtra("sensorData") as? SensorData
-        }
+        val sensorData =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                intent.getSerializableExtra("sensorData", SensorData::class.java)
+            } else {
+                intent.getSerializableExtra("sensorData") as? SensorData
+            }
         if (sensorData == null) {
             finish(); return
         }

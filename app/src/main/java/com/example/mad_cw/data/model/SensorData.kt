@@ -25,5 +25,24 @@ data class SensorData(
     val status: String? = null
 ) : Serializable {
     // No-arg constructor for Firebase
-    constructor() : this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+    constructor() : this(
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    )
 }
