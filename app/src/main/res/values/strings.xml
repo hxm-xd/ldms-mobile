@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MAD-CW</string>
+    <string name="app_name">LandBud</string>
     <!-- Replace with your Google Maps API Key -->
     <string name="google_maps_key">AIzaSyDQcPkIvkjjA-eoiutc6etrTZMUMR2AbUc</string>
 </resources>
