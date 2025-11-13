@@ -3,6 +3,11 @@ package com.example.mad_cw.ui.compose
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -49,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
@@ -82,7 +89,8 @@ fun DashboardScreen(
     onToggleFavorite: (String) -> Unit,
     showMyLocation: Boolean = false,
     lastKnownLocation: LatLng? = null,
-    onRefreshLocation: (() -> Unit)? = null
+    onRefreshLocation: (() -> Unit)? = null,
+    isRefreshingLocation: Boolean = false
 ) {
     val context = LocalContext.current
     val mapView = rememberMapViewWithLifecycle()
@@ -155,18 +163,26 @@ fun DashboardScreen(
 
         Box(Modifier.fillMaxSize()) {
             AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { mv ->
-                mv.getMapAsync { gmap ->
-                    googleMapState.value = gmap
-                    gmap.uiSettings.isZoomControlsEnabled = true
-                    gmap.uiSettings.isMyLocationButtonEnabled = showMyLocation
-                    if (showMyLocation) {
-                        try {
-                            gmap.isMyLocationEnabled = true
-                        } catch (_: SecurityException) { /* ignore if permission missing */ }
+                // Initialize map only once; avoid resetting camera on recompositions
+                val existing = googleMapState.value
+                if (existing == null) {
+                    mv.getMapAsync { gmap ->
+                        googleMapState.value = gmap
+                        gmap.uiSettings.isZoomControlsEnabled = true
+                        gmap.uiSettings.isMyLocationButtonEnabled = showMyLocation
+                        if (showMyLocation) {
+                            try { gmap.isMyLocationEnabled = true } catch (_: SecurityException) {}
+                        }
+                        // Initial camera move only once
+                        gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(7.29, 80.63), 8f))
+                        onMapReady?.invoke()
                     }
-                    // Move to a default location
-                    gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(7.29, 80.63), 8f))
-                    onMapReady?.invoke()
+                } else {
+                    // Keep My Location UI in sync without moving camera
+                    existing.uiSettings.isMyLocationButtonEnabled = showMyLocation
+                    if (showMyLocation) {
+                        try { existing.isMyLocationEnabled = true } catch (_: SecurityException) {}
+                    }
                 }
             }
 
@@ -301,11 +317,36 @@ fun DashboardScreen(
                     .padding(end = 10.dp, bottom = 110.dp),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                androidx.compose.material.FloatingActionButton(onClick = {
-                    // Refresh last known location (activity handles fetching)
-                    onRefreshLocation?.invoke()
-                }, backgroundColor = MaterialTheme.colors.primary) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh location", tint = MaterialTheme.colors.onPrimary)
+                androidx.compose.material.FloatingActionButton(
+                    onClick = {
+                        // Refresh last known location (activity handles fetching)
+                        onRefreshLocation?.invoke()
+                    },
+                    backgroundColor = MaterialTheme.colors.primary
+                ) {
+                    if (isRefreshingLocation) {
+                        val infinite = rememberInfiniteTransition(label = "refresh-rotate")
+                        val angle by infinite.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(durationMillis = 1000, easing = LinearEasing)
+                            ),
+                            label = "refresh-rotation"
+                        )
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = "Refreshing location",
+                            tint = MaterialTheme.colors.onPrimary,
+                            modifier = Modifier.size(24.dp).rotate(angle)
+                        )
+                    } else {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = "Refresh location",
+                            tint = MaterialTheme.colors.onPrimary
+                        )
+                    }
                 }
                 androidx.compose.material.FloatingActionButton(onClick = {
                     val gmap = googleMapState.value

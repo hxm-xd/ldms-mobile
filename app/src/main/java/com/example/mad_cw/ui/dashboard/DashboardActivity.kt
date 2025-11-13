@@ -57,6 +57,7 @@ class DashboardActivity : AppCompatActivity() {
     private var locationPermissionGrantedState by mutableStateOf(false)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var lastKnownLocationState by mutableStateOf<LatLng?>(null)
+    private var refreshingLocationState by mutableStateOf(false)
 
     companion object {
         private const val PERMISSION_REQUEST_LOCATION = 1001
@@ -129,7 +130,8 @@ class DashboardActivity : AppCompatActivity() {
                 onToggleFavorite = { name -> toggleFavoriteCompose(name) },
                 showMyLocation = locationPermissionGrantedState,
                 lastKnownLocation = lastKnownLocationState,
-                onRefreshLocation = { refreshLastKnownLocation() }
+                onRefreshLocation = { refreshLastKnownLocation() },
+                isRefreshingLocation = refreshingLocationState
                 )
             }
         }
@@ -385,10 +387,19 @@ class DashboardActivity : AppCompatActivity() {
     private fun refreshLastKnownLocation() {
         if (!locationPermissionGrantedState) return
         try {
+            refreshingLocationState = true
             fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
                 if (loc != null) {
                     lastKnownLocationState = LatLng(loc.latitude, loc.longitude)
+                    showSnackbar("Location updated")
+                } else {
+                    showSnackbar("Location unavailable")
                 }
+            }.addOnFailureListener {
+                // no-op: keep lastKnownLocationState as is
+                showSnackbar("Location refresh failed")
+            }.addOnCompleteListener {
+                refreshingLocationState = false
             }
         } catch (_: SecurityException) { }
     }
