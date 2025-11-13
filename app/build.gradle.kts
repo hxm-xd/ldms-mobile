@@ -69,6 +69,8 @@ dependencies {
 
     // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
+    // Location Services for user location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")

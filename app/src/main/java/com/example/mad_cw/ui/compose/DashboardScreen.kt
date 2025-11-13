@@ -31,10 +31,12 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -77,7 +79,10 @@ fun DashboardScreen(
     selectedSensor: SensorData?,
     onSelectedChange: (SensorData?) -> Unit,
     favorites: Set<String>,
-    onToggleFavorite: (String) -> Unit
+    onToggleFavorite: (String) -> Unit,
+    showMyLocation: Boolean = false,
+    lastKnownLocation: LatLng? = null,
+    onRefreshLocation: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val mapView = rememberMapViewWithLifecycle()
@@ -153,6 +158,12 @@ fun DashboardScreen(
                 mv.getMapAsync { gmap ->
                     googleMapState.value = gmap
                     gmap.uiSettings.isZoomControlsEnabled = true
+                    gmap.uiSettings.isMyLocationButtonEnabled = showMyLocation
+                    if (showMyLocation) {
+                        try {
+                            gmap.isMyLocationEnabled = true
+                        } catch (_: SecurityException) { /* ignore if permission missing */ }
+                    }
                     // Move to a default location
                     gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(7.29, 80.63), 8f))
                     onMapReady?.invoke()
@@ -208,11 +219,16 @@ fun DashboardScreen(
             }
 
             // Update markers when sensors change. Use toList() so changes in content retrigger.
-            LaunchedEffect(sensors.toList(), currentFilter, googleMapState.value) {
+            LaunchedEffect(sensors.toList(), currentFilter, googleMapState.value, showMyLocation) {
                 val gmap = googleMapState.value
                 if (gmap == null) return@LaunchedEffect
                 withContext(Dispatchers.Main) {
                     try {
+                        // keep my location layer in sync with permission state
+                        gmap.uiSettings.isMyLocationButtonEnabled = showMyLocation
+                        if (showMyLocation) {
+                            try { gmap.isMyLocationEnabled = true } catch (_: SecurityException) {}
+                        }
                         gmap.clear()
                         val filtered =
                             if (currentFilter == "All") sensors else sensors.filter { levelFor(it) == currentFilter }
@@ -275,6 +291,32 @@ fun DashboardScreen(
                         icon = { Icon(Icons.Filled.AccountCircle, contentDescription = "Profile") },
                         label = { Text("Profile") }
                     )
+                }
+            }
+
+            // Recenter and Refresh FABs (bottom-end above bottom nav)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 10.dp, bottom = 110.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                androidx.compose.material.FloatingActionButton(onClick = {
+                    // Refresh last known location (activity handles fetching)
+                    onRefreshLocation?.invoke()
+                }, backgroundColor = MaterialTheme.colors.primary) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh location", tint = MaterialTheme.colors.onPrimary)
+                }
+                androidx.compose.material.FloatingActionButton(onClick = {
+                    val gmap = googleMapState.value
+                    val target = lastKnownLocation
+                    if (gmap != null && target != null) {
+                        gmap.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(target, 14f)
+                        )
+                    }
+                }, backgroundColor = MaterialTheme.colors.primary) {
+                    Icon(Icons.Filled.MyLocation, contentDescription = "Recenter", tint = MaterialTheme.colors.onPrimary)
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.example.mad_cw.ui.dashboard
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,12 +13,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.mad_cw.data.model.SensorData
 import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.auth.LoginActivity
 import com.example.mad_cw.ui.compose.DashboardScreen
 import com.example.mad_cw.ui.sensor.SensorDetailActivity
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.Marker
 import com.google.firebase.database.DataSnapshot
@@ -25,6 +30,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -47,6 +54,13 @@ class DashboardActivity : AppCompatActivity() {
     private val authRepository = AuthRepository()
     private var userId: String = ""
     private val markerIconCache = mutableMapOf<String, BitmapDescriptor>()
+    private var locationPermissionGrantedState by mutableStateOf(false)
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var lastKnownLocationState by mutableStateOf<LatLng?>(null)
+
+    companion object {
+        private const val PERMISSION_REQUEST_LOCATION = 1001
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +68,7 @@ class DashboardActivity : AppCompatActivity() {
         // Initialize firebase refs and auth
         database = FirebaseDatabase.getInstance().reference
         usersDatabase = FirebaseDatabase.getInstance().getReference("users")
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         val user = authRepository.getCurrentUser()
         if (user == null) {
@@ -79,6 +94,8 @@ class DashboardActivity : AppCompatActivity() {
                 favoritesDatabase.child(sensorName).setValue(true)
             }
         }
+
+        ensureLocationPermission()
 
         setContent {
             LDMSTheme {
@@ -109,7 +126,10 @@ class DashboardActivity : AppCompatActivity() {
                     selectedSensorName = s?.nodeName
                 },
                 favorites = favoritesState,
-                onToggleFavorite = { name -> toggleFavoriteCompose(name) }
+                onToggleFavorite = { name -> toggleFavoriteCompose(name) },
+                showMyLocation = locationPermissionGrantedState,
+                lastKnownLocation = lastKnownLocationState,
+                onRefreshLocation = { refreshLastKnownLocation() }
                 )
             }
         }
@@ -223,25 +243,18 @@ class DashboardActivity : AppCompatActivity() {
         try {
             database.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    try {
-                        val newList = mutableListOf<SensorData>()
-                        for (child in snapshot.children) {
-                            if (child.key?.startsWith("node_") == true) {
-                                val node = child.getValue(SensorData::class.java)
-                                if (node != null) {
-                                    if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(
-                                            node.nodeName
-                                        )
-                                    ) {
-                                        newList.add(node)
-                                    }
+                    val newList = mutableListOf<SensorData>()
+                    for (child in snapshot.children) {
+                        if (child.key?.startsWith("node_") == true) {
+                            val node = child.getValue(SensorData::class.java)
+                            if (node != null) {
+                                if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName)) {
+                                    newList.add(node)
                                 }
                             }
                         }
-                        stateList.clear(); stateList.addAll(newList)
-                    } catch (e: Exception) {
-                        Log.e("DashboardActivity", "Error processing sensor data: ${e.message}", e)
                     }
+                    stateList.clear(); stateList.addAll(newList)
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -350,5 +363,46 @@ class DashboardActivity : AppCompatActivity() {
                 Log.e("DashboardActivity", "Realtime listener cancelled: ${error.message}")
             }
         })
+    }
+
+    private fun ensureLocationPermission() {
+        val granted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            locationPermissionGrantedState = true
+            refreshLastKnownLocation()
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                PERMISSION_REQUEST_LOCATION
+            )
+        }
+    }
+
+    private fun refreshLastKnownLocation() {
+        if (!locationPermissionGrantedState) return
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                if (loc != null) {
+                    lastKnownLocationState = LatLng(loc.latitude, loc.longitude)
+                }
+            }
+        } catch (_: SecurityException) { }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_LOCATION) {
+            locationPermissionGrantedState =
+                grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (locationPermissionGrantedState) refreshLastKnownLocation()
+        }
     }
 }
