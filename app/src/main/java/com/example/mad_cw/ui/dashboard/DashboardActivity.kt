@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.MaterialTheme
+import com.example.mad_cw.ui.theme.LDMSTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -79,7 +80,7 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         setContent {
-            MaterialTheme {
+            LDMSTheme {
                 DashboardScreen(
                 sensors = sensorsState,
                 currentFilter = currentFilterState,

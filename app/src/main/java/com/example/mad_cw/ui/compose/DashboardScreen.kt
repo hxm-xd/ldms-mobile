@@ -397,16 +397,17 @@ private fun levelFor(s: SensorData): String {
 
 private fun iconFor(context: Context, sensor: SensorData): BitmapDescriptor {
     val key = levelFor(sensor)
-    val color = when (key) {
-        "High" -> android.R.color.holo_red_dark
-        "Medium" -> android.R.color.holo_orange_dark
-        else -> android.R.color.holo_green_dark
+    // Keep alert severity colors the same: red (High), orange (Medium), green (Low)
+    val hex = when (key) {
+        "High" -> "#D32F2F"   // red 700
+        "Medium" -> "#F57C00" // orange 700
+        else -> "#388E3C"      // green 700
     }
     val bitmap = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = android.graphics.Paint().apply {
         isAntiAlias = true
-        this.color = androidx.core.content.ContextCompat.getColor(context, color)
+        color = android.graphics.Color.parseColor(hex)
         style = android.graphics.Paint.Style.FILL
     }
     canvas.drawCircle(24f, 24f, 24f, paint)

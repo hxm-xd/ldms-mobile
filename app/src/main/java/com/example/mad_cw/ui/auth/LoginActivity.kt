@@ -14,6 +14,7 @@ import com.example.mad_cw.R
 import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.compose.LoginScreen
 import com.example.mad_cw.viewmodel.AuthViewModel
+import com.example.mad_cw.ui.theme.LDMSTheme
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var inputEmail: EditText
@@ -27,23 +28,25 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Use Compose content
+        // Use Compose content wrapped in app theme
         setContent {
-            LoginScreen(
-                authViewModel = authViewModel,
-                onNavigateToDashboard = {
-                    startActivity(
-                        Intent(
-                            this,
-                            com.example.mad_cw.ui.dashboard.DashboardActivity::class.java
+            LDMSTheme {
+                LoginScreen(
+                    authViewModel = authViewModel,
+                    onNavigateToDashboard = {
+                        startActivity(
+                            Intent(
+                                this,
+                                com.example.mad_cw.ui.dashboard.DashboardActivity::class.java
+                            )
                         )
-                    )
-                    finish()
-                },
-                onNavigateToSignUp = {
-                    startActivity(Intent(this, SignUpActivity::class.java))
-                }
-            )
+                        finish()
+                    },
+                    onNavigateToSignUp = {
+                        startActivity(Intent(this, SignUpActivity::class.java))
+                    }
+                )
+            }
         }
 
         // Check if user is already logged in (after everything is initialized)

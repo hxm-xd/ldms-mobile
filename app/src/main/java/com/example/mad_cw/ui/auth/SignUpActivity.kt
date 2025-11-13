@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.mad_cw.R
 import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.compose.SignUpScreen
+import com.example.mad_cw.ui.theme.LDMSTheme
 
 class SignUpActivity : AppCompatActivity() {
 
@@ -31,10 +32,12 @@ class SignUpActivity : AppCompatActivity() {
         )
 
         setContent {
-            SignUpScreen(onNavigateToLogin = {
-                startActivity(Intent(this, LoginActivity::class.java))
-                finish()
-            })
+            LDMSTheme {
+                SignUpScreen(onNavigateToLogin = {
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                })
+            }
         }
     }
 

@@ -9,11 +9,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -44,7 +47,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mad_cw.R
@@ -70,12 +77,19 @@ fun LoginScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
+        color = MaterialTheme.colors.background
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(32.dp)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
@@ -92,16 +106,25 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            Card(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp), elevation = 6.dp) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp),
+                elevation = 6.dp,
+                shape = MaterialTheme.shapes.medium
+            ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Email") },
                         leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
@@ -116,7 +139,12 @@ fun LoginScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation()
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                     Button(onClick = {
@@ -158,12 +186,19 @@ fun SignUpScreen(authViewModel: AuthViewModel = viewModel(), onNavigateToLogin: 
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
+        color = MaterialTheme.colors.background
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(32.dp)
-                .navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally
+            .navigationBarsPadding()
+            .imePadding()
+            .verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
             Image(
@@ -178,16 +213,25 @@ fun SignUpScreen(authViewModel: AuthViewModel = viewModel(), onNavigateToLogin: 
                 color = MaterialTheme.colors.primary
             )
 
-            Card(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp), elevation = 6.dp) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                elevation = 6.dp,
+                shape = MaterialTheme.shapes.medium
+            ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text("Full Name") },
                         leadingIcon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
@@ -195,7 +239,12 @@ fun SignUpScreen(authViewModel: AuthViewModel = viewModel(), onNavigateToLogin: 
                         onValueChange = { email = it },
                         label = { Text("Email") },
                         leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
@@ -210,9 +259,15 @@ fun SignUpScreen(authViewModel: AuthViewModel = viewModel(), onNavigateToLogin: 
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation()
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
                     )
                     Spacer(modifier = Modifier.height(12.dp))
+                    val passwordMismatch = confirm.isNotBlank() && password.isNotBlank() && confirm != password
                     OutlinedTextField(
                         value = confirm,
                         onValueChange = { confirm = it },
@@ -225,8 +280,18 @@ fun SignUpScreen(authViewModel: AuthViewModel = viewModel(), onNavigateToLogin: 
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = if (confirmVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation()
+                        singleLine = true,
+                        isError = passwordMismatch,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation()
                     )
+                    if (passwordMismatch) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = "Passwords do not match", color = MaterialTheme.colors.error, style = MaterialTheme.typography.caption)
+                    }
                     Spacer(modifier = Modifier.height(20.dp))
                     Button(onClick = {
                         if (email.isBlank() || password.isBlank() || confirm.isBlank()) return@Button

@@ -1,5 +1,6 @@
 package com.example.mad_cw.ui.compose
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -127,6 +128,25 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
+
+                Button(onClick = {
+                    androidx.appcompat.app.AlertDialog.Builder(context)
+                        .setTitle("Logout")
+                        .setMessage("Are you sure you want to logout?")
+                        .setPositiveButton("Logout") { _, _ ->
+                            authRepository.logoutUser()
+                            val intent = Intent(
+                                context,
+                                com.example.mad_cw.ui.auth.LoginActivity::class.java
+                            )
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(intent)
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Logout")
+                }
 
                 Button(onClick = onNavigateToDashboard, modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Back to Dashboard")
