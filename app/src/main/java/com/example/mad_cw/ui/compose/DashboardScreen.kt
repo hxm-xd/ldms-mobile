@@ -207,8 +207,8 @@ fun DashboardScreen(
                 }
             }
 
-            // Update markers when sensors change
-            LaunchedEffect(sensors, currentFilter, googleMapState.value) {
+            // Update markers when sensors change. Use toList() so changes in content retrigger.
+            LaunchedEffect(sensors.toList(), currentFilter, googleMapState.value) {
                 val gmap = googleMapState.value
                 if (gmap == null) return@LaunchedEffect
                 withContext(Dispatchers.Main) {
