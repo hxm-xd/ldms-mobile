@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Additional ignores for multi-module build outputs and caches
+**/build/
+.idea/
+.kotlin/

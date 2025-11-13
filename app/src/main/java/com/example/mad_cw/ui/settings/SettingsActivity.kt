@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.activity.compose.setContent
+import com.example.mad_cw.ui.compose.SettingsScreen
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.mad_cw.R
@@ -23,16 +25,10 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
-        
         prefs = getSharedPreferences("LDMS_PREFS", MODE_PRIVATE)
-        
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Settings"
-        
-        initViews()
-        loadSettings()
-        setupClickListeners()
+        setContent {
+            SettingsScreen(onBack = { finish() })
+        }
     }
     
     private fun initViews() {
@@ -58,24 +54,7 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun setupClickListeners() {
-        switchNotifications.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("notifications_enabled", isChecked).apply()
-            if (isChecked) {
-                // Enable notifications
-                // You can integrate with FCM here
-            } else {
-                // Disable notifications
-            }
-        }
-        
-        switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("dark_mode_enabled", isChecked).apply()
-            applyDarkMode(isChecked)
-        }
-        
-        findViewById<TextView>(R.id.btnLogout).setOnClickListener {
-            showLogoutDialog()
-        }
+        // Logic moved into Compose SettingsScreen
     }
     
     private fun applyDarkMode(enabled: Boolean) {
@@ -87,6 +66,7 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun showLogoutDialog() {
+        // Kept for code compatibility; Compose shows its own dialog
         AlertDialog.Builder(this)
             .setTitle("Logout")
             .setMessage("Are you sure you want to logout?")

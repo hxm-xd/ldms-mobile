@@ -6,6 +6,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.setContent
+import com.example.mad_cw.ui.compose.LoginScreen
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -27,24 +29,23 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
         enableEdgeToEdge()
-        setContentView(R.layout.activity_login)
-        
-        val rootView = findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0)
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+        // Use Compose content
+        setContent {
+            LoginScreen(authViewModel = authViewModel,
+                onNavigateToDashboard = {
+                    startActivity(Intent(this, com.example.mad_cw.ui.dashboard.DashboardActivity::class.java))
+                    finish()
+                },
+                onNavigateToSignUp = {
+                    startActivity(Intent(this, SignUpActivity::class.java))
+                }
+            )
         }
-        
-        initViews()
-        setupObservers()
-        setupClickListeners()
         
         // Check if user is already logged in (after everything is initialized)
         // Use post to ensure it runs after the layout is fully loaded
-        rootView.post {
+        window.decorView.post {
             try {
                 val currentUser = authRepository.getCurrentUser()
                 if (currentUser != null) {
@@ -54,7 +55,6 @@ class LoginActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 android.util.Log.e("LoginActivity", "Error checking auth state: ${e.message}", e)
-                // Continue to show login screen if there's an error
             }
         }
     }
@@ -91,23 +91,6 @@ class LoginActivity : AppCompatActivity() {
     }
     
     private fun setupClickListeners() {
-        btnLogin.setOnClickListener {
-            val email = inputEmail.text.toString().trim()
-            val password = inputPassword.text.toString().trim()
-            
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            
-            authViewModel.login(email, password)
-        }
-        
-        btnSignUp.setOnClickListener {
-            val intent = Intent(this, SignUpActivity::class.java)
-            startActivity(intent)
-            @Suppress("DEPRECATION")
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-        }
+        // Click handlers moved into Compose LoginScreen
     }
 }

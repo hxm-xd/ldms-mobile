@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import com.example.mad_cw.data.model.SensorData
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.mutableStateOf
 
 @Composable
 fun SensorDetailScreen(initial: SensorData, updates: State<SensorData?>, onBack: () -> Unit) {
@@ -57,4 +59,12 @@ fun SensorDetailScreen(initial: SensorData, updates: State<SensorData?>, onBack:
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SensorDetailPreview() {
+    val sample = SensorData(nodeName = "node_1", tilt = 12.34, soilMoisture = 45.0, rain = 2.5)
+    val state = remember { mutableStateOf(sample) }
+    SensorDetailScreen(initial = sample, updates = state, onBack = {})
 }

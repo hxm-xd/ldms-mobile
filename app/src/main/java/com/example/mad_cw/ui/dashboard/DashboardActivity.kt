@@ -4,81 +4,37 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
-import android.view.View
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
-import com.example.mad_cw.R
-import com.example.mad_cw.data.model.SensorData
-import com.example.mad_cw.data.repository.AuthRepository
-import com.example.mad_cw.ui.auth.LoginActivity
-import com.example.mad_cw.ui.sensor.SensorDetailActivity
-import com.example.mad_cw.ui.settings.SettingsActivity
-import com.example.mad_cw.util.FirebaseValidator
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.example.mad_cw.data.model.SensorData
+import com.example.mad_cw.data.repository.AuthRepository
+import com.example.mad_cw.ui.auth.LoginActivity
 import com.example.mad_cw.ui.compose.DashboardScreen
-import com.google.android.gms.maps.CameraUpdateFactory
+import com.example.mad_cw.ui.sensor.SensorDetailActivity
+import com.example.mad_cw.util.FirebaseValidator
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.chip.Chip
-import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.*
 
 class DashboardActivity : AppCompatActivity() {
 
-    private lateinit var rootCoordinator: CoordinatorLayout
     private lateinit var mMap: GoogleMap
     private lateinit var database: DatabaseReference
     private lateinit var usersDatabase: DatabaseReference
     private lateinit var favoritesDatabase: DatabaseReference
 
-    private lateinit var bottomSheet: ConstraintLayout
-    private lateinit var sensorName: TextView
-    private lateinit var sensorTilt: TextView
-    private lateinit var sensorSoil: TextView
-    private lateinit var sensorRain: TextView
-    private lateinit var sensorThreat: TextView
-    private lateinit var btnViewDetails: Button
-    private lateinit var btnFavorite: ImageButton
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
+    // Legacy view fields removed - UI is now driven by Jetpack Compose
 
-    private lateinit var totalSensors: TextView
-    private lateinit var highRiskSensors: TextView
-    private lateinit var activeAlerts: TextView
-
-    private lateinit var filterAll: Chip
-    private lateinit var filterLow: Chip
-    private lateinit var filterMedium: Chip
-    private lateinit var filterHigh: Chip
-
-    private lateinit var btnMenu: ImageButton
-
-    private val handler = Handler(Looper.getMainLooper())
-    private val refreshInterval = 45000L // 45 seconds
-    private val refreshRunnable = object : Runnable {
-        override fun run() {
-            loadSensors()
-            handler.postDelayed(this, refreshInterval)
-        }
-    }
+    // Legacy refresh loop removed; realtime listeners handle updates
 
     private var currentFilter: String = "All" // All, Low, Medium, High
     private var selectedSensor: SensorData? = null
@@ -96,7 +52,7 @@ class DashboardActivity : AppCompatActivity() {
 
         // Initialize firebase refs and auth
         database = FirebaseDatabase.getInstance().reference
-        usersDatabase = FirebaseDatabase.getInstance().getReference("users")
+    usersDatabase = FirebaseDatabase.getInstance().getReference("users")
 
         val user = authRepository.getCurrentUser()
         if (user == null) {
@@ -110,6 +66,17 @@ class DashboardActivity : AppCompatActivity() {
         // Compose state
         val sensorsState = mutableStateListOf<SensorData>()
         var currentFilterState by mutableStateOf(currentFilter)
+        var selectedSensorState by mutableStateOf<SensorData?>(null)
+        var favoritesState by mutableStateOf<Set<String>>(emptySet())
+
+        // Functions to mutate favorites in Firebase and update Compose state
+        fun toggleFavoriteCompose(sensorName: String) {
+            if (favoritesState.contains(sensorName)) {
+                favoritesDatabase.child(sensorName).removeValue()
+            } else {
+                favoritesDatabase.child(sensorName).setValue(true)
+            }
+        }
 
         setContent {
             DashboardScreen(
@@ -127,205 +94,46 @@ class DashboardActivity : AppCompatActivity() {
                 onMapReady = {
                     // once map is ready, load sensors
                     loadSensorsIntoState(sensorsState)
-                }
+                },
+                selectedSensor = selectedSensorState,
+                onSelectedChange = { s -> selectedSensorState = s },
+                favorites = favoritesState,
+                onToggleFavorite = { name -> toggleFavoriteCompose(name) }
             )
         }
 
         // start realtime listener for push updates
-        setupRealtimeListenerForState(sensorsState)
-        loadFavoriteSensors()
+    setupRealtimeListenerForState(sensorsState)
+    loadFavoriteSensorsCompose { newSet -> favoritesState = newSet }
     }
 
-    private fun initViews() {
-        try {
-            bottomSheet = findViewById(R.id.bottomSheet)
-            sensorName = findViewById(R.id.sensorName)
-            sensorTilt = findViewById(R.id.sensorTilt)
-            sensorSoil = findViewById(R.id.sensorSoil)
-            sensorRain = findViewById(R.id.sensorRain)
-            sensorThreat = findViewById(R.id.sensorThreat)
-            btnViewDetails = findViewById(R.id.btnViewDetails)
-            btnFavorite = findViewById(R.id.btnFavorite)
-            btnMenu = findViewById(R.id.btnMenu)
+    // initViews, view-binding and click handlers removed - Compose manages the UI now
 
-            totalSensors = findViewById(R.id.totalSensors)
-            highRiskSensors = findViewById(R.id.highRiskSensors)
-            activeAlerts = findViewById(R.id.activeAlerts)
+    // setupBottomSheet removed; Compose bottom sheet UI should be used instead
 
-            filterAll = findViewById(R.id.filterAll)
-            filterLow = findViewById(R.id.filterLow)
-            filterMedium = findViewById(R.id.filterMedium)
-            filterHigh = findViewById(R.id.filterHigh)
-
-            btnViewDetails.setOnClickListener {
-                selectedSensor?.let { sensor ->
-                    val intent = Intent(this, SensorDetailActivity::class.java)
-                    intent.putExtra("sensorData", sensor)
-                    startActivity(intent)
-                    @Suppress("DEPRECATION")
-                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-                }
-            }
-
-            btnFavorite.setOnClickListener {
-                selectedSensor?.let { sensor ->
-                    toggleFavorite(sensor.nodeName ?: "")
-                }
-            }
-            Log.d("DashboardActivity", "initViews: Finished.")
-        } catch (e: Exception) {
-            Log.e("DashboardActivity", "Error in initViews: ${e.message}", e)
-            showSnackbar("Error initializing views: ${e.message}")
-        }
-    }
-
-    private fun setupBottomSheet() {
-        Log.d("DashboardActivity", "setupBottomSheet: Starting.")
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {}
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
-        })
-        Log.d("DashboardActivity", "setupBottomSheet: Finished.")
-    }
-
-    private fun setupFilters() {
-        Log.d("DashboardActivity", "setupFilters: Starting.")
-        filterAll.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                currentFilter = "All"
-                filterLow.isChecked = false
-                filterMedium.isChecked = false
-                filterHigh.isChecked = false
-                applyFilter()
-            }
-        }
-
-        filterLow.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                currentFilter = "Low"
-                filterAll.isChecked = false
-                filterMedium.isChecked = false
-                filterHigh.isChecked = false
-                applyFilter()
-            }
-        }
-
-        filterMedium.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                currentFilter = "Medium"
-                filterAll.isChecked = false
-                filterLow.isChecked = false
-                filterHigh.isChecked = false
-                applyFilter()
-            }
-        }
-
-        filterHigh.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                currentFilter = "High"
-                filterAll.isChecked = false
-                filterLow.isChecked = false
-                filterMedium.isChecked = false
-                applyFilter()
-            }
-        }
-        Log.d("DashboardActivity", "setupFilters: Finished.")
-    }
+    // setupFilters removed; Compose provides filter UI
 
     private fun setupMenu() {
         Log.d("DashboardActivity", "setupMenu: Starting.")
-        btnMenu.setOnClickListener {
-            val popup = androidx.appcompat.widget.PopupMenu(this, btnMenu)
-            popup.menuInflater.inflate(R.menu.dashboard_menu, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.menu_settings -> {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                        @Suppress("DEPRECATION")
-                        overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-                        true
-                    }
-                    R.id.menu_logout -> {
-                        authRepository.logoutUser()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        finish()
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popup.show()
-        }
+        // Menu is now handled in Compose (top/right actions) - legacy PopupMenu removed
         Log.d("DashboardActivity", "setupMenu: Finished.")
     }
 
     // The rest of your code (loadSensors, updateMapMarkers, showSensorDetails, etc.) remains unchanged
-    // Only change Snackbar.make() calls to use rootCoordinator for safety
+    // Use a Toast for simple messages; Compose-level UI should handle user-facing notifications
     private fun showSnackbar(message: String) {
-        if (::rootCoordinator.isInitialized) {
-            Snackbar.make(rootCoordinator, message, Snackbar.LENGTH_SHORT).show()
-        } else {
-            Log.e("DashboardActivity", "Snackbar failed: rootCoordinator not initialized. Message: $message")
-        }
-    }
-
-    private fun loadUserPreferences() {
-        Log.d("DashboardActivity", "loadUserPreferences: Starting.")
         try {
-            if (userId.isNotEmpty()) {
-                usersDatabase.child(userId).child("assignedSensors").addListenerForSingleValueEvent(
-                    object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            Log.d("DashboardActivity", "loadUserPreferences: onDataChange.")
-                            try {
-                                userAssignedSensors.clear()
-                                for (child in snapshot.children) {
-                                    child.value?.toString()?.let { sensorName ->
-                                        userAssignedSensors.add(sensorName)
-                                    }
-                                }
-                                // If no assigned sensors, load all sensors
-                                if (userAssignedSensors.isEmpty()) {
-                                    // Only load sensors if map is ready
-                                    if (::mMap.isInitialized) {
-                                        loadSensors()
-                                    }
-                                }
-                                Log.d("DashboardActivity", "loadUserPreferences: Processed assigned sensors.")
-                            } catch (e: Exception) {
-                                Log.e("DashboardActivity", "Error processing user preferences: ${e.message}", e)
-                            }
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            Log.e("DashboardActivity", "Error loading user preferences: ${error.message}")
-                            // On error, load all sensors if map is ready
-                            if (::mMap.isInitialized) {
-                                loadSensors()
-                            }
-                        }
-                    }
-                )
-            } else {
-                Log.d("DashboardActivity", "loadUserPreferences: No user ID, loading all sensors.")
-                // If no user ID, load all sensors if map is ready
-                if (::mMap.isInitialized) {
-                    loadSensors()
-                }
-            }
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e("DashboardActivity", "Error in loadUserPreferences: ${e.message}", e)
-            // On error, try to load sensors if map is ready
-            if (::mMap.isInitialized) {
-                loadSensors()
-            }
+            Log.e("DashboardActivity", "showSnackbar failed: ${e.message}", e)
         }
     }
+
+    // loadUserPreferences removed; filtering handled via Compose state
 
     private fun loadFavoriteSensors() {
         Log.d("DashboardActivity", "loadFavoriteSensors: Starting.")
+        // Legacy: kept for non-Compose code paths - prefer loadFavoriteSensorsCompose
         favoritesDatabase.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 Log.d("DashboardActivity", "loadFavoriteSensors: onDataChange.")
@@ -333,7 +141,7 @@ class DashboardActivity : AppCompatActivity() {
                 for (child in snapshot.children) {
                     child.key?.let { favoriteSensors.add(it) }
                 }
-                updateFavoriteButton()
+                // legacy favorite button update removed; Compose handles favorite UI
                 Log.d("DashboardActivity", "loadFavoriteSensors: Favorites updated.")
             }
 
@@ -343,22 +151,24 @@ class DashboardActivity : AppCompatActivity() {
         })
     }
 
-    private fun toggleFavorite(sensorName: String) {
-        if (favoriteSensors.contains(sensorName)) {
-            favoritesDatabase.child(sensorName).removeValue()
-        } else {
-            favoritesDatabase.child(sensorName).setValue(true)
-        }
+    // Compose-friendly favorite loader: calls callback with the Set<String> of favorites
+    private fun loadFavoriteSensorsCompose(onUpdate: (Set<String>) -> Unit) {
+        favoritesDatabase.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val favs = mutableSetOf<String>()
+                for (child in snapshot.children) {
+                    child.key?.let { favs.add(it) }
+                }
+                onUpdate(favs)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("DashboardActivity", "loadFavoriteSensorsCompose: onCancelled: ${error.message}")
+            }
+        })
     }
 
-    private fun updateFavoriteButton() {
-        selectedSensor?.nodeName?.let { name ->
-            val isFavorite = favoriteSensors.contains(name)
-            btnFavorite.setImageResource(
-                if (isFavorite) android.R.drawable.star_big_on else android.R.drawable.star_big_off
-            )
-        }
-    }
+    // Legacy favorite helpers removed; favorites are handled via Compose state and Firebase
 
     override fun onStart() {
         super.onStart()
@@ -380,45 +190,9 @@ class DashboardActivity : AppCompatActivity() {
         Log.d("DashboardActivity", "onPause: Paused.")
     }
 
-    fun onMapReady(googleMap: GoogleMap) {
-        Log.d("DashboardActivity", "onMapReady: Map is ready.")
-        try {
-            mMap = googleMap
-            mMap.uiSettings.isZoomControlsEnabled = true
-            mMap.uiSettings.isZoomGesturesEnabled = true
+    // onMapReady removed; Map is handled inside Compose DashboardScreen
 
-            // Set default camera position (Sri Lanka area)
-            val defaultLocation = LatLng(7.2906, 80.6337)
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 8f))
-
-            // Validate Firebase structure before loading sensors
-            Log.d("DashboardActivity", "onMapReady: Validating Firebase connection...")
-            FirebaseValidator.validateConnection { isValid, message ->
-                Log.d("DashboardActivity", "Firebase Validation Result:\n$message")
-                runOnUiThread {
-                    if (isValid) {
-                        Toast.makeText(this, "✅ Firebase connection validated", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "⚠️ Firebase validation issues - check Logcat", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-
-            // Now that map is ready, load sensors
-            Log.d("DashboardActivity", "onMapReady: Calling loadSensors.")
-            loadSensors()
-            // Pre-cache marker icons
-            precacheMarkerIcons()
-        } catch (e: Exception) {
-            Log.e("DashboardActivity", "Error in onMapReady: ${e.message}", e)
-            showSnackbar("Error loading map: ${e.message}")
-        }
-    }
-
-    private fun loadSensors() {
-        // legacy: kept for compatibility; prefer loadSensorsIntoState(sensorsState)
-        Log.d("DashboardActivity", "loadSensors: calling loadSensorsIntoState")
-    }
+    // loadSensors removed; Compose helpers load data directly
 
     // New helper to populate a Compose state list from Firebase
     private fun loadSensorsIntoState(stateList: MutableList<SensorData>) {
@@ -483,8 +257,7 @@ class DashboardActivity : AppCompatActivity() {
             android.util.Log.d("DashboardActivity", "New high-risk sensors detected: $newHighRiskSensors")
         }
 
-        updateSummaryCard()
-        updateMapMarkers()
+    // Summary card now driven by Compose; legacy map update removed
 
         // Update bottom sheet if sensor is selected
         selectedSensor?.let { sensor ->
@@ -493,161 +266,17 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateSummaryCard() {
-        totalSensors.text = allSensors.size.toString()
+    // Summary is driven by Compose; legacy updateSummaryCard removed.
 
-        val highRiskCount = allSensors.count { getThreatLevel(it) == "High" }
-        highRiskSensors.text = highRiskCount.toString()
-
-        val activeAlertsCount = allSensors.count {
-            getThreatLevel(it) == "High" || getThreatLevel(it) == "Medium"
-        }
-        activeAlerts.text = activeAlertsCount.toString()
-    }
-
-    private fun updateMapMarkers() {
-        if (!::mMap.isInitialized) {
-            Log.w("DashboardActivity", "updateMapMarkers: Map not ready yet")
-            return
-        }
-
-        try {
-            mMap.clear()
-            sensorMarkers.clear()
-
-            val filteredSensors = if (currentFilter == "All") {
-                allSensors
-            } else {
-                allSensors.filter { getThreatLevel(it) == currentFilter }
-            }
-
-            for (sensor in filteredSensors) {
-                val lat = sensor.latitude
-                val lng = sensor.longitude
-                if (lat != null && lng != null) {
-                    val position = LatLng(lat, lng)
-                    val marker = mMap.addMarker(
-                        MarkerOptions()
-                            .position(position)
-                            .title(sensor.nodeName ?: "Sensor")
-                            .icon(getMarkerIcon(sensor))
-                    )
-                    marker?.tag = sensor
-                    sensor.nodeName?.let { name ->
-                        marker?.let { sensorMarkers[name] = it }
-                    }
-                }
-            }
-
-            // Move camera to show all markers
-            if (filteredSensors.isNotEmpty()) {
-                val firstSensor = filteredSensors.first()
-                val firstLat = firstSensor.latitude
-                val firstLng = firstSensor.longitude
-                if (firstLat != null && firstLng != null) {
-                    val bounds = LatLngBounds.Builder()
-                    filteredSensors.forEach { sensor ->
-                        val lat = sensor.latitude
-                        val lng = sensor.longitude
-                        if (lat != null && lng != null) {
-                            bounds.include(LatLng(lat, lng))
-                        }
-                    }
-                    try {
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
-                    } catch (e: Exception) {
-                        // If bounds too small or only one point, just zoom to the first sensor
-                        mMap.moveCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(firstLat, firstLng),
-                                12f
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Marker click listener
-            mMap.setOnMarkerClickListener { marker ->
-                val sensor = marker.tag as? SensorData
-                sensor?.let { showSensorDetails(it) }
-                true
-            }
-        } catch (e: Exception) {
-            Log.e("DashboardActivity", "Error updating map markers: ${e.message}", e)
-            showSnackbar("Error updating map markers")
-        }
-    }
+    // updateMapMarkers removed; markers are rendered inside Compose DashboardScreen
 
     private fun showSensorDetails(sensor: SensorData) {
+        // Convert legacy bottom-sheet population into internal selection state
         selectedSensor = sensor
-        try {
-            sensorName.text = sensor.nodeName ?: "N/A"
-
-            val tiltValue = sensor.tilt ?: 0.0
-            val soilValue = sensor.soilMoisture ?: 0.0
-            val rainValue = sensor.rain ?: 0.0
-
-            sensorTilt.text = "${String.format("%.2f", tiltValue)}°"
-            sensorSoil.text = "${String.format("%.1f", soilValue)}%"
-            sensorRain.text = "${String.format("%.1f", rainValue)} mm"
-            sensorThreat.text = getThreatLevel(sensor)
-
-            updateFavoriteButton()
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-        } catch (e: Exception) {
-            Log.e("DashboardActivity", "Error showing sensor details: ${e.message}", e)
-        }
+        Log.d("DashboardActivity", "showSensorDetails: selected ${sensor.nodeName}")
     }
 
-    private fun getMarkerIcon(sensor: SensorData): BitmapDescriptor {
-        val key = getThreatLevel(sensor)
-        return markerIconCache.getOrPut(key) {
-            val colorRes = when (key) {
-                "High" -> android.R.color.holo_red_dark
-                "Medium" -> android.R.color.holo_orange_dark
-                "Low" -> android.R.color.holo_green_dark
-                else -> android.R.color.darker_gray
-            }
-            val bitmap = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            val paint = android.graphics.Paint().apply {
-                isAntiAlias = true
-                color = ContextCompat.getColor(this@DashboardActivity, colorRes)
-                style = android.graphics.Paint.Style.FILL
-            }
-            canvas.drawCircle(24f, 24f, 24f, paint)
-            BitmapDescriptorFactory.fromBitmap(bitmap)
-        }
-    }
-
-    private fun precacheMarkerIcons() {
-        // Pre-cache by threat levels to avoid missing resources and speed up marker creation
-        listOf("Low", "Medium", "High", "Unknown").forEach { level ->
-            if (!markerIconCache.containsKey(level)) {
-                val dummy = SensorData(nodeName = level)
-                // Use a minimal SensorData with implied threat level via key
-                // We'll map to colors by the level below using a when in getMarkerIcon
-                markerIconCache[level] = run {
-                    val colorRes = when (level) {
-                        "High" -> android.R.color.holo_red_dark
-                        "Medium" -> android.R.color.holo_orange_dark
-                        "Low" -> android.R.color.holo_green_dark
-                        else -> android.R.color.darker_gray
-                    }
-                    val bitmap = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
-                    val canvas = Canvas(bitmap)
-                    val paint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        color = ContextCompat.getColor(this@DashboardActivity, colorRes)
-                        style = android.graphics.Paint.Style.FILL
-                    }
-                    canvas.drawCircle(24f, 24f, 24f, paint)
-                    BitmapDescriptorFactory.fromBitmap(bitmap)
-                }
-            }
-        }
-    }
+    // Marker icon cache and precaching removed; Compose provides marker icons
 
     private fun getThreatLevel(sensor: SensorData): String {
         val tilt = sensor.tilt ?: 0.0
@@ -659,24 +288,9 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun applyFilter() {
-        Log.d("DashboardActivity", "applyFilter: Applying filter - $currentFilter")
-        updateMapMarkers()
-    }
+    // applyFilter removed; Compose handles filtering and map updates
 
-    private fun setupRealtimeListener() {
-        Log.d("DashboardActivity", "setupRealtimeListener: Setting up realtime listener.")
-        valueEventListener = database.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                Log.d("DashboardActivity", "Realtime data received.")
-                updateSensorsFromSnapshot(snapshot)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("DashboardActivity", "Realtime listener cancelled: ${error.message}")
-            }
-        })
-    }
+    // Legacy realtime listener removed; using setupRealtimeListenerForState for Compose
 
     // New helper to set up realtime listener that updates a Compose state list
     private fun setupRealtimeListenerForState(stateList: MutableList<SensorData>) {

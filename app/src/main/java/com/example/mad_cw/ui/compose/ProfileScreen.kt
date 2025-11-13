@@ -17,6 +17,7 @@ import com.example.mad_cw.R
 import com.example.mad_cw.data.repository.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.tasks.await
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> Unit) {
@@ -82,6 +83,47 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
             Spacer(modifier = Modifier.weight(1f))
 
             Button(onClick = onNavigateToDashboard, modifier = Modifier.fillMaxWidth()) {
+                Text(text = "Back to Dashboard")
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProfileScreenPreview() {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(painter = painterResource(id = com.example.mad_cw.R.mipmap.ic_launcher_round), contentDescription = null,
+                    modifier = Modifier.size(96.dp))
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(text = "Alice Example", style = MaterialTheme.typography.h6)
+                    Text(text = "alice@example.com", style = MaterialTheme.typography.body2)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(text = "Display name")
+            BasicTextField(value = "Alice Example", onValueChange = {}, modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(onClick = { /* no-op preview */ }) {
+                Text(text = "Save")
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(onClick = { /* back */ }, modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Back to Dashboard")
             }
         }

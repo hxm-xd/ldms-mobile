@@ -3,14 +3,18 @@ package com.example.mad_cw.ui.compose
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.mad_cw.data.model.SensorData
@@ -22,8 +26,12 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.filled.Settings
 
+
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DashboardScreen(
     sensors: List<SensorData>,
@@ -31,113 +39,214 @@ fun DashboardScreen(
     onFilterChanged: (String) -> Unit,
     onSensorSelected: (SensorData) -> Unit,
     onNavigateToProfile: () -> Unit,
-    onMapReady: (() -> Unit)? = null
+    onMapReady: (() -> Unit)? = null,
+    selectedSensor: SensorData?,
+    onSelectedChange: (SensorData?) -> Unit,
+    favorites: Set<String>,
+    onToggleFavorite: (String) -> Unit
 ) {
     val context = LocalContext.current
     val mapView = rememberMapViewWithLifecycle()
     val googleMapState = remember { mutableStateOf<GoogleMap?>(null) }
-
-    LaunchedEffect(googleMapState.value) {
-        onMapReady?.invoke()
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { mapView ->
-            mapView.getMapAsync { gmap ->
-                googleMapState.value = gmap
-                gmap.uiSettings.isZoomControlsEnabled = true
-                // Move to a default location
-                gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(7.29, 80.63), 8f))
-            }
-        }
-
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(12.dp)) {
-            Card(elevation = 6.dp) {
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = "Total: ${sensors.size}")
-                    Row {
-                        TextButton(onClick = { onFilterChanged("All") }) { Text("All") }
-                        TextButton(onClick = { onFilterChanged("Low") }) { Text("Low") }
-                        TextButton(onClick = { onFilterChanged("Medium") }) { Text("Medium") }
-                        TextButton(onClick = { onFilterChanged("High") }) { Text("High") }
-                    }
-                }
-            }
-        }
-
-        // Bottom sheet area - simple card showing selected sensor when available
-        var selected by remember { mutableStateOf<SensorData?>(null) }
-        if (selected != null) {
-            // display simple bottom card
-            Card(modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .align(Alignment.BottomCenter), elevation = 12.dp) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = selected!!.nodeName ?: "Sensor")
-                    Text(text = "Tilt: ${selected!!.tilt ?: 0.0}")
-                    Text(text = "Soil: ${selected!!.soilMoisture ?: 0.0}")
+    val scope = rememberCoroutineScope()
+    val scaffoldState = rememberBottomSheetScaffoldState()
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = 0.dp,
+        sheetContent = {
+            if (selectedSensor != null) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = selectedSensor.nodeName ?: "Sensor")
+                    Text(text = "Tilt: ${selectedSensor.tilt ?: 0.0}")
+                    Text(text = "Soil: ${selectedSensor.soilMoisture ?: 0.0}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { /* open details */ onSensorSelected(selected!!) }) { Text("View Full Details") }
+                    Row {
+                        Button(onClick = { onSensorSelected(selectedSensor) }) { Text("View Full Details") }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        val nodeName = selectedSensor.nodeName ?: ""
+                        val isFav = favorites.contains(nodeName)
+                        Button(onClick = { onToggleFavorite(nodeName) }) { Text(if (isFav) "★ Favorited" else "☆ Favorite") }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { onSelectedChange(null) }) { Text("Close") }
+                }
+            } else {
+                Box(Modifier.height(1.dp)) {}
+            }
+        }
+    ) { padding ->
+        // Compute summary values in scope
+        val total = sensors.size
+        val highRisk = sensors.count { levelFor(it) == "High" }
+        val activeAlerts = sensors.count { (it.status ?: "").contains("alert", ignoreCase = true) }
+
+        Box(Modifier.fillMaxSize()) {
+            AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { mv ->
+                mv.getMapAsync { gmap ->
+                    googleMapState.value = gmap
+                    gmap.uiSettings.isZoomControlsEnabled = true
+                    // Move to a default location
+                    gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(7.29, 80.63), 8f))
+                    onMapReady?.invoke()
+                }
+            }
+
+            // Summary + filters
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(12.dp)
+                    .statusBarsPadding()
+            ) {
+                Card(elevation = 6.dp) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // left: summary counts
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.padding(end = 16.dp)) {
+                                Text(text = "Total")
+                                Text(text = "$total", style = MaterialTheme.typography.h6)
+                            }
+                            Column(modifier = Modifier.padding(end = 16.dp)) {
+                                Text(text = "High Risk")
+                                Text(text = "$highRisk", style = MaterialTheme.typography.h6)
+                            }
+                            Column {
+                                Text(text = "Active Alerts")
+                                Text(text = "$activeAlerts", style = MaterialTheme.typography.h6)
+                            }
+                        }
+
+                        // right: filters
+                        Row {
+                            TextButton(onClick = { onFilterChanged("All") }) { Text("All") }
+                            TextButton(onClick = { onFilterChanged("Low") }) { Text("Low") }
+                            TextButton(onClick = { onFilterChanged("Medium") }) { Text("Medium") }
+                            TextButton(onClick = { onFilterChanged("High") }) { Text("High") }
+                        }
+                    }
+                }
+            }
+
+            // Update markers when sensors change
+            LaunchedEffect(sensors, currentFilter, googleMapState.value) {
+                val gmap = googleMapState.value
+                if (gmap == null) return@LaunchedEffect
+                withContext(Dispatchers.Main) {
+                    try {
+                        gmap.clear()
+                        val filtered = if (currentFilter == "All") sensors else sensors.filter { levelFor(it) == currentFilter }
+                        for (s in filtered) {
+                            val lat = s.latitude
+                            val lng = s.longitude
+                            if (lat != null && lng != null) {
+                                val pos = LatLng(lat, lng)
+                                val marker = gmap.addMarker(
+                                    MarkerOptions().position(pos).title(s.nodeName ?: "Sensor").icon(iconFor(context, s))
+                                )
+                                marker?.tag = s
+                            }
+                        }
+                        if (filtered.isNotEmpty()) {
+                            val first = filtered.first()
+                            val fLat = first.latitude
+                            val fLng = first.longitude
+                            if (fLat != null && fLng != null) {
+                                gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(fLat, fLng), 10f))
+                            }
+                        }
+
+                        gmap.setOnMarkerClickListener { marker ->
+                            val s = marker.tag as? SensorData
+                            s?.let {
+                                onSelectedChange(it)
+                                scope.launch { scaffoldState.bottomSheetState.expand() }
+                            }
+                            true
+                        }
+                    } catch (_: Exception) {}
+                }
+            }
+            // Bottom navigation overlaid at the bottom
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+            ) {
+                BottomNavigation {
+                    BottomNavigationItem(
+                        selected = true,
+                        onClick = {},
+                        icon = { Icon(Icons.Filled.Home, contentDescription = "Dashboard") },
+                        label = { Text("Dashboard") }
+                    )
+                    BottomNavigationItem(
+                        selected = false,
+                        onClick = { onNavigateToProfile() },
+                        icon = { Icon(Icons.Filled.AccountCircle, contentDescription = "Profile") },
+                        label = { Text("Profile") }
+                    )
                 }
             }
         }
+    }
+}
 
-        // Bottom navigation
-        BottomNavigation(modifier = Modifier.align(Alignment.BottomCenter)) {
-            BottomNavigationItem(
-                selected = true,
-                onClick = {},
-                icon = { Text("") },
-                label = { Text("Dashboard") }
-            )
-            BottomNavigationItem(
-                selected = false,
-                onClick = { onNavigateToProfile() },
-                icon = { Text("") },
-                label = { Text("Profile") }
-            )
-        }
+@Preview(showBackground = true, widthDp = 360, heightDp = 720)
+@Composable
+fun DashboardPreview() {
+    // Simple preview that doesn't render the MapView — shows summary, filters, and bottom nav
+    val sampleSensors = listOf(
+        com.example.mad_cw.data.model.SensorData(nodeName = "node_1", tilt = 5.0, soilMoisture = 30.0, status = "ok"),
+        com.example.mad_cw.data.model.SensorData(nodeName = "node_2", tilt = 20.0, soilMoisture = 75.0, status = "alert")
+    )
 
-        // Update markers when sensors change
-        LaunchedEffect(sensors, currentFilter, googleMapState.value) {
-            val gmap = googleMapState.value
-            if (gmap == null) return@LaunchedEffect
-            withContext(Dispatchers.Main) {
-                try {
-                    gmap.clear()
-                    val filtered = if (currentFilter == "All") sensors else sensors.filter { levelFor(it) == currentFilter }
-                    for (s in filtered) {
-                        val lat = s.latitude
-                        val lng = s.longitude
-                        if (lat != null && lng != null) {
-                            val pos = LatLng(lat, lng)
-                            val marker = gmap.addMarker(MarkerOptions().position(pos).title(s.nodeName ?: "Sensor").icon(iconFor(context, s)))
-                            marker?.tag = s
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+            .statusBarsPadding()) {
+            Card(elevation = 6.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.padding(end = 16.dp)) {
+                            Text(text = "Total")
+                            Text(text = "${sampleSensors.size}", style = MaterialTheme.typography.h6)
                         }
-                    }
-                    if (filtered.isNotEmpty()) {
-                        val first = filtered.first()
-                        val fLat = first.latitude
-                        val fLng = first.longitude
-                        if (fLat != null && fLng != null) {
-                            gmap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(fLat, fLng), 10f))
+                        Column(modifier = Modifier.padding(end = 16.dp)) {
+                            Text(text = "High Risk")
+                            Text(text = "${sampleSensors.count { levelFor(it) == "High" }}", style = MaterialTheme.typography.h6)
+                        }
+                        Column {
+                            Text(text = "Active Alerts")
+                            Text(text = "${sampleSensors.count { (it.status ?: "").contains("alert", ignoreCase = true) }}", style = MaterialTheme.typography.h6)
                         }
                     }
 
-                    gmap.setOnMarkerClickListener { marker ->
-                        val s = marker.tag as? SensorData
-                        s?.let {
-                            selected = it
-                        }
-                        true
+                    Row {
+                        TextButton(onClick = {}) { Text("All") }
+                        TextButton(onClick = {}) { Text("Low") }
+                        TextButton(onClick = {}) { Text("Medium") }
+                        TextButton(onClick = {}) { Text("High") }
                     }
-                } catch (_: Exception) {}
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            BottomNavigation(modifier = Modifier.navigationBarsPadding()) {
+                BottomNavigationItem(selected = true, onClick = {}, icon = { Icon(Icons.Filled.Home, contentDescription = null) }, label = { Text("Dashboard") })
+                BottomNavigationItem(selected = false, onClick = {}, icon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) }, label = { Text("Profile") })
             }
         }
     }

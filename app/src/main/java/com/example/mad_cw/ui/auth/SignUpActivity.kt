@@ -6,6 +6,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.setContent
+import com.example.mad_cw.ui.compose.SignUpScreen
 import com.example.mad_cw.R
 import com.example.mad_cw.data.repository.AuthRepository
 
@@ -29,10 +31,12 @@ class SignUpActivity : AppCompatActivity() {
                 .build()
         )
 
-        setContentView(R.layout.activity_signup)
-
-        initViews()
-        setupClickListeners()
+        setContent {
+            SignUpScreen(onNavigateToLogin = {
+                startActivity(Intent(this, LoginActivity::class.java))
+                finish()
+            })
+        }
     }
 
     private fun initViews() {
@@ -45,44 +49,6 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnSignUp.setOnClickListener {
-            try {
-                val email = inputEmail.text.toString().trim()
-                val password = inputPassword.text.toString().trim()
-                val confirmPassword = inputConfirmPassword.text.toString().trim()
-
-                if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                    Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                if (password != confirmPassword) {
-                    Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                if (password.length < 6) {
-                    Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                authRepository.registerUser(email, password) { success, error ->
-                    if (success) {
-                        Toast.makeText(this, "Sign-up successful", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        finish()
-                    } else {
-                        Toast.makeText(this, "Error: $error", Toast.LENGTH_LONG).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, "An error occurred: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-
-        btnLoginRedirect.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-        }
+        // Handled inside Compose SignUpScreen and AuthViewModel
     }
 }
