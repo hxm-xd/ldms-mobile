@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -30,8 +31,9 @@ fun BottomSheetSensorContent(sensor: SensorData?) {
     Surface(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Drag handle
             Box(

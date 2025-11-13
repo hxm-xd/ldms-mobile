@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -40,7 +42,7 @@ fun SensorDetailScreen(initial: SensorData, updates: State<SensorData?>, onBack:
     val current = updates.value ?: initial
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text(current.nodeName ?: "Sensor") }, navigationIcon = {
+        TopAppBar(modifier = Modifier.statusBarsPadding(), title = { Text(current.nodeName ?: "Sensor") }, navigationIcon = {
             androidx.compose.material.IconButton(onClick = onBack) {
                 Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
             }
@@ -53,6 +55,7 @@ fun SensorDetailScreen(initial: SensorData, updates: State<SensorData?>, onBack:
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
+                    .navigationBarsPadding()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.ShowChart, contentDescription = null, tint = MaterialTheme.colors.primary)

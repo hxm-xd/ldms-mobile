@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +24,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +56,7 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
     }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Profile") }, navigationIcon = {
+        TopAppBar(modifier = Modifier.statusBarsPadding(), title = { Text("Profile") }, navigationIcon = {
             androidx.compose.material.IconButton(onClick = onNavigateToDashboard) {
                 Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
             }
@@ -67,6 +69,7 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
+                    .navigationBarsPadding()
             ) {
                 Card(modifier = Modifier.fillMaxWidth(), elevation = 4.dp) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {

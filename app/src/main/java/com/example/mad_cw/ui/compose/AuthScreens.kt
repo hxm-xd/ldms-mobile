@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
@@ -67,11 +70,12 @@ fun LoginScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(32.dp)
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
@@ -154,11 +158,12 @@ fun SignUpScreen(authViewModel: AuthViewModel = viewModel(), onNavigateToLogin: 
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally
+                .padding(32.dp)
+                .navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
             Image(
@@ -264,7 +269,7 @@ fun SettingsScreen(onBack: () -> Unit) {
     val user = authRepo.getCurrentUser()
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Settings") }, navigationIcon = {
+        TopAppBar(modifier = Modifier.statusBarsPadding(), title = { Text("Settings") }, navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back")
             }
@@ -273,7 +278,9 @@ fun SettingsScreen(onBack: () -> Unit) {
         Surface(modifier = Modifier
             .fillMaxSize()
             .padding(padding)) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier
+                .padding(16.dp)
+                .navigationBarsPadding()) {
                 Card(modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp), elevation = 4.dp) {

@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.mad_cw.data.model.SensorData
@@ -88,15 +89,45 @@ fun DashboardScreen(
         sheetPeekHeight = 0.dp,
         sheetContent = {
             if (selectedSensor != null) {
-                Card(elevation = 8.dp) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = selectedSensor.nodeName ?: "Sensor", style = MaterialTheme.typography.h6)
+                Card(modifier = Modifier
+                    .navigationBarsPadding()
+                    .fillMaxWidth(), elevation = 8.dp) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = selectedSensor.nodeName ?: "Sensor",
+                            style = MaterialTheme.typography.h6,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = "Tilt: ${String.format("%.2f", selectedSensor.tilt ?: 0.0)}°")
-                        Text(text = "Soil Moisture: ${String.format("%.1f", selectedSensor.soilMoisture ?: 0.0)} %")
-                        selectedSensor.rain?.let { Spacer(modifier = Modifier.height(2.dp)); Text(text = "Rainfall: ${String.format("%.1f", it)} mm") }
+                        Text(
+                            text = "Tilt: ${String.format("%.2f", selectedSensor.tilt ?: 0.0)}°",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Soil Moisture: ${String.format("%.1f", selectedSensor.soilMoisture ?: 0.0)} %",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        selectedSensor.rain?.let {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Rainfall: ${String.format("%.1f", it)} mm",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
-                        Row {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
                             Button(onClick = { onSensorSelected(selectedSensor) }) { Text("View Details") }
                             Spacer(modifier = Modifier.width(8.dp))
                             val nodeName = selectedSensor.nodeName ?: ""
