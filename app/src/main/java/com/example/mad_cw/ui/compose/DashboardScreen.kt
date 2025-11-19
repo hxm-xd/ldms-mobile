@@ -79,6 +79,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun DashboardScreen(
     sensors: List<SensorData>,
+    sensorsUpdatedAt: Long = 0L,
     currentFilter: String,
     onFilterChanged: (String) -> Unit,
     onSensorSelected: (SensorData) -> Unit,
@@ -259,8 +260,8 @@ fun DashboardScreen(
                 }
             }
 
-            // Update markers when sensors change. Use toList() so changes in content retrigger.
-            LaunchedEffect(sensors.toList(), currentFilter, googleMapState.value, showMyLocation) {
+            // Update markers when sensors change. Use toList() and sensorsUpdatedAt so any change triggers.
+            LaunchedEffect(sensors.toList(), sensorsUpdatedAt, currentFilter, googleMapState.value, showMyLocation) {
                 val gmap = googleMapState.value
                 if (gmap == null) return@LaunchedEffect
                 withContext(Dispatchers.Main) {
