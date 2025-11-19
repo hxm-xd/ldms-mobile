@@ -162,6 +162,8 @@ fun DashboardScreen(
         val total = sensors.size
         val highRisk = sensors.count { levelFor(it) == "High" }
         val activeAlerts = sensors.count { (it.status ?: "").contains("alert", ignoreCase = true) }
+        val avgTilt = sensors.mapNotNull { it.tilt }.average().takeIf { !it.isNaN() }
+        val avgSoil = sensors.mapNotNull { it.soilMoisture }.average().takeIf { !it.isNaN() }
 
         Box(Modifier.fillMaxSize()) {
             AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { mv ->
@@ -210,6 +212,25 @@ fun DashboardScreen(
                             SummaryItem(icon = Icons.Filled.Warning, label = "High Risk", value = "$highRisk")
                             Spacer(modifier = Modifier.width(8.dp))
                             SummaryItem(icon = Icons.Filled.Notifications, label = "Alerts", value = "$activeAlerts")
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            if (avgTilt != null) {
+                                Text(
+                                    text = "Avg Tilt: ${"%.2f".format(avgTilt)}°",
+                                    style = MaterialTheme.typography.body2,
+                                    textAlign = TextAlign.End
+                                )
+                            }
+                            if (avgSoil != null) {
+                                Text(
+                                    text = "Avg Soil: ${"%.1f".format(avgSoil)} %",
+                                    style = MaterialTheme.typography.body2,
+                                    textAlign = TextAlign.End
+                                )
+                            }
                         }
 
                         // right: filter dropdown

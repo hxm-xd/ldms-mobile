@@ -32,6 +32,11 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLngBounds
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -157,6 +162,9 @@ class DashboardActivity : AppCompatActivity() {
                     selectedSensorState = refreshed
                 }
             }
+
+            // Check for nearby high-threat sensors and raise local notifications
+            handleNearbyHighThreatSensors(updatedList)
         }
         loadFavoriteSensorsCompose { newSet -> favoritesState = newSet }
     }
@@ -425,6 +433,89 @@ class DashboardActivity : AppCompatActivity() {
             locationPermissionGrantedState =
                 grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
             if (locationPermissionGrantedState) refreshLastKnownLocation()
+        }
+    }
+
+    private fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371000.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a =
+            sin(dLat / 2) * sin(dLat / 2) +
+                    cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                    sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+    }
+
+    private var lastNotifiedSensors: Set<String> = emptySet()
+
+    private fun handleNearbyHighThreatSensors(sensors: List<SensorData>) {
+        val currentLocation = lastKnownLocationState ?: return
+        val newlyHighAndNearby = sensors.filter { sensor ->
+            val name = sensor.nodeName ?: return@filter false
+            if (lastNotifiedSensors.contains(name)) return@filter false
+            val threat = getThreatLevel(sensor)
+            if (threat != "High") return@filter false
+            val lat = sensor.latitude
+            val lng = sensor.longitude
+            if (lat == null || lng == null) return@filter false
+            val distance = distanceMeters(currentLocation.latitude, currentLocation.longitude, lat, lng)
+            distance <= 1000.0
+        }
+
+        if (newlyHighAndNearby.isEmpty()) return
+
+        lastNotifiedSensors = lastNotifiedSensors + newlyHighAndNearby.mapNotNull { it.nodeName }
+
+        // Notify for the first sensor in the list
+        val sensor = newlyHighAndNearby.first()
+        val sensorName = sensor.nodeName ?: "Sensor"
+        sendNearbyHighThreatNotification(sensorName, currentLocation)
+    }
+
+    private fun sendNearbyHighThreatNotification(sensorName: String, userLocation: LatLng) {
+        try {
+            val context = this
+            val intent = Intent(context, com.example.mad_cw.ui.nearby.NearbySensorsActivity::class.java).apply {
+                putExtra("user_lat", userLocation.latitude)
+                putExtra("user_lng", userLocation.longitude)
+                putExtra("sensor_name", sensorName)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+
+            val pendingIntent = androidx.core.app.PendingIntentCompat.getActivity(
+                context,
+                0,
+                intent,
+                0,
+                false
+            )
+
+            val channelId = "ldms_nearby_alerts"
+            val notificationManager =
+                getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val channel = android.app.NotificationChannel(
+                    channelId,
+                    "Nearby High Threat Alerts",
+                    android.app.NotificationManager.IMPORTANCE_HIGH
+                )
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            val builder = androidx.core.app.NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(com.example.mad_cw.R.drawable.ic_landslide)
+                .setContentTitle("High threat nearby sensor")
+                .setContentText("$sensorName has reached HIGH threat level within 1km of you.")
+                .setAutoCancel(true)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+
+            notificationManager.notify(sensorName.hashCode(), builder.build())
+        } catch (e: Exception) {
+            Log.e("DashboardActivity", "Failed to send nearby high threat notification: ${e.message}", e)
         }
     }
 }

@@ -18,6 +18,8 @@ class NearbySensorsActivity : AppCompatActivity() {
     private var userLocation: LatLng? = null
     private val nearbySensorsState = mutableStateListOf<SensorData>()
     private var loadingState by mutableStateOf(true)
+    private var valueEventListener: ValueEventListener? = null
+    private var highlightedSensorName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +27,10 @@ class NearbySensorsActivity : AppCompatActivity() {
         val lng = intent.getDoubleExtra("user_lng", Double.NaN)
         if (!lat.isNaN() && !lng.isNaN()) {
             userLocation = LatLng(lat, lng)
+        }
+        val sensorNameFromIntent = intent.getStringExtra("sensor_name")
+        if (!sensorNameFromIntent.isNullOrBlank()) {
+            highlightedSensorName = sensorNameFromIntent
         }
         database = FirebaseDatabase.getInstance().reference
         loadSensorsWithinRadius(1000.0)
@@ -34,37 +40,51 @@ class NearbySensorsActivity : AppCompatActivity() {
                     userLocation = userLocation,
                     sensors = nearbySensorsState,
                     loading = loadingState,
-                    onBack = { finish() }
+                    onBack = { finish() },
+                    highlightedSensorName = highlightedSensorName
                 )
             }
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        valueEventListener?.let { database.removeEventListener(it) }
+    }
+
     private fun loadSensorsWithinRadius(radiusMeters: Double) {
         loadingState = true
-        database.addListenerForSingleValueEvent(object : ValueEventListener {
+        val center = userLocation
+        if (center == null) {
+            loadingState = false
+            return
+        }
+
+        valueEventListener?.let { database.removeEventListener(it) }
+        valueEventListener = database.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    val center = userLocation
                     val list = mutableListOf<SensorData>()
-                    if (center != null) {
-                        for (child in snapshot.children) {
-                            if (child.key?.startsWith("node_") == true) {
-                                val node = child.getValue(SensorData::class.java)
-                                if (node != null && node.latitude != null && node.longitude != null) {
-                                    val d = distanceMeters(center.latitude, center.longitude, node.latitude!!, node.longitude!!)
-                                    if (d <= radiusMeters) list.add(node)
-                                }
+                    for (child in snapshot.children) {
+                        if (child.key?.startsWith("node_") == true) {
+                            val node = child.getValue(SensorData::class.java)
+                            val lat = node?.latitude
+                            val lng = node?.longitude
+                            if (node != null && lat != null && lng != null) {
+                                val d = distanceMeters(center.latitude, center.longitude, lat, lng)
+                                if (d <= radiusMeters) list.add(node)
                             }
                         }
                     }
-                    nearbySensorsState.clear(); nearbySensorsState.addAll(list)
+                    nearbySensorsState.clear()
+                    nearbySensorsState.addAll(list)
                 } catch (e: Exception) {
                     Log.e("NearbySensorsActivity", "Error filtering nearby sensors: ${e.message}", e)
                 } finally {
                     loadingState = false
                 }
             }
+
             override fun onCancelled(error: DatabaseError) {
                 loadingState = false
                 Log.e("NearbySensorsActivity", "Firebase cancelled: ${error.message}")

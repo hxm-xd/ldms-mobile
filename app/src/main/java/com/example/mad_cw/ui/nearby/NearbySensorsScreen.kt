@@ -31,7 +31,8 @@ fun NearbySensorsScreen(
     userLocation: LatLng?,
     sensors: List<SensorData>,
     loading: Boolean,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    highlightedSensorName: String? = null
 ) {
     Scaffold(
         topBar = {
@@ -111,7 +112,9 @@ fun NearbySensorsScreen(
                     } else {
                         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(sensors) { sensor ->
-                                SensorRow(sensor)
+                                val isHighlighted =
+                                    highlightedSensorName != null && highlightedSensorName == sensor.nodeName
+                                SensorRow(sensor, isHighlighted)
                             }
                         }
                     }
@@ -122,8 +125,13 @@ fun NearbySensorsScreen(
 }
 
 @Composable
-private fun SensorRow(sensor: SensorData) {
-    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+private fun SensorRow(sensor: SensorData, isHighlighted: Boolean = false) {
+    val background = if (isHighlighted) {
+        MaterialTheme.colors.primary.copy(alpha = 0.12f)
+    } else {
+        MaterialTheme.colors.surface
+    }
+    Card(elevation = 2.dp, modifier = Modifier.fillMaxWidth().background(background)) {
         Column(Modifier.padding(12.dp)) {
             Text(sensor.nodeName ?: "Sensor", style = MaterialTheme.typography.subtitle1)
             val tilt = sensor.tilt ?: 0.0
