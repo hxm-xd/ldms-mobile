@@ -270,7 +270,8 @@ class DashboardActivity : AppCompatActivity() {
                     val newList = mutableListOf<SensorData>()
                     for (child in snapshot.children) {
                         if (child.key?.startsWith("node_") == true) {
-                            val node = child.getValue(SensorData::class.java)
+                            val raw = child.getValue(SensorData::class.java)
+                            val node = raw?.copy(nodeName = raw.nodeName ?: child.key)
                             if (node != null) {
                                 if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName)) {
                                     newList.add(node)
@@ -298,7 +299,8 @@ class DashboardActivity : AppCompatActivity() {
         for (child in snapshot.children) {
             // Only process children that are sensor nodes (e.g., "node_1")
             if (child.key?.startsWith("node_") == true) {
-                val node = child.getValue(SensorData::class.java)
+                val raw = child.getValue(SensorData::class.java)
+                val node = raw?.copy(nodeName = raw.nodeName ?: child.key)
                 Log.d("DashboardActivity", "Parsed node from Firebase: $node")
                 if (node == null) {
                     Log.e("DashboardActivity", "SensorData is null for child: ${child.key}")
@@ -374,7 +376,8 @@ class DashboardActivity : AppCompatActivity() {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 try {
                     if (snapshot.key?.startsWith("node_") == true) {
-                        val node = snapshot.getValue(SensorData::class.java)
+                        val raw = snapshot.getValue(SensorData::class.java)
+                        val node = raw?.copy(nodeName = raw.nodeName ?: snapshot.key)
                         if (node != null && (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName))) {
                             // add or replace if present
                             val idx = stateList.indexOfFirst { it.nodeName == node.nodeName }
@@ -391,7 +394,8 @@ class DashboardActivity : AppCompatActivity() {
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
                 try {
                     if (snapshot.key?.startsWith("node_") == true) {
-                        val node = snapshot.getValue(SensorData::class.java)
+                        val raw = snapshot.getValue(SensorData::class.java)
+                        val node = raw?.copy(nodeName = raw.nodeName ?: snapshot.key)
                         if (node != null && (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName))) {
                             val idx = stateList.indexOfFirst { it.nodeName == node.nodeName }
                             if (idx >= 0) {
@@ -411,8 +415,8 @@ class DashboardActivity : AppCompatActivity() {
             override fun onChildRemoved(snapshot: DataSnapshot) {
                 try {
                     if (snapshot.key?.startsWith("node_") == true) {
-                        val node = snapshot.getValue(SensorData::class.java)
-                        val name = node?.nodeName ?: snapshot.key
+                        val raw = snapshot.getValue(SensorData::class.java)
+                        val name = (raw?.nodeName ?: snapshot.key)
                         val idx = stateList.indexOfFirst { it.nodeName == name }
                         if (idx >= 0) {
                             stateList.removeAt(idx)

@@ -67,7 +67,8 @@ class NearbySensorsActivity : AppCompatActivity() {
                     val list = mutableListOf<SensorData>()
                     for (child in snapshot.children) {
                         if (child.key?.startsWith("node_") == true) {
-                            val node = child.getValue(SensorData::class.java)
+                            val raw = child.getValue(SensorData::class.java)
+                            val node = raw?.copy(nodeName = raw.nodeName ?: child.key)
                             val lat = node?.latitude
                             val lng = node?.longitude
                             if (node != null && lat != null && lng != null) {
