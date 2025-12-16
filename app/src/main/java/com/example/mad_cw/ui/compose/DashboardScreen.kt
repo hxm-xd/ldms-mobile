@@ -79,6 +79,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun DashboardScreen(
     sensors: List<SensorData>,
+    sensorsUpdatedAt: Long = 0L,
     currentFilter: String,
     onFilterChanged: (String) -> Unit,
     onSensorSelected: (SensorData) -> Unit,
@@ -98,6 +99,7 @@ fun DashboardScreen(
     val mapView = rememberMapViewWithLifecycle()
     val googleMapState = remember { mutableStateOf<GoogleMap?>(null) }
     val scope = rememberCoroutineScope()
+    var hasCameraMovedToSensors by remember { mutableStateOf(false) }
     val scaffoldState = rememberBottomSheetScaffoldState()
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -259,8 +261,8 @@ fun DashboardScreen(
                 }
             }
 
-            // Update markers when sensors change. Use toList() so changes in content retrigger.
-            LaunchedEffect(sensors.toList(), currentFilter, googleMapState.value, showMyLocation) {
+            // Update markers when sensors change. Use toList() and sensorsUpdatedAt so any change triggers.
+            LaunchedEffect(sensors.toList(), sensorsUpdatedAt, currentFilter, googleMapState.value, showMyLocation) {
                 val gmap = googleMapState.value
                 if (gmap == null) return@LaunchedEffect
                 withContext(Dispatchers.Main) {
@@ -285,7 +287,9 @@ fun DashboardScreen(
                                 marker?.tag = s
                             }
                         }
-                        if (filtered.isNotEmpty()) {
+                        // Only move/zoom camera to sensor area once when data first loads,
+                        // not on every sensor update.
+                        if (!hasCameraMovedToSensors && filtered.isNotEmpty()) {
                             val first = filtered.first()
                             val fLat = first.latitude
                             val fLng = first.longitude
@@ -298,6 +302,7 @@ fun DashboardScreen(
                                         ), 10f
                                     )
                                 )
+                                hasCameraMovedToSensors = true
                             }
                         }
 
