@@ -56,6 +56,7 @@ class DashboardActivity : AppCompatActivity() {
     private var favoriteSensors = mutableSetOf<String>()
     private var userAssignedSensors = mutableSetOf<String>()
     private var valueEventListener: ValueEventListener? = null
+    private var childEventListener: com.google.firebase.database.ChildEventListener? = null
     private val authRepository = AuthRepository()
     private var userId: String = ""
     private val markerIconCache = mutableMapOf<String, BitmapDescriptor>()
@@ -63,6 +64,7 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var lastKnownLocationState by mutableStateOf<LatLng?>(null)
     private var refreshingLocationState by mutableStateOf(false)
+    private var sensorsUpdatedAt by mutableStateOf(0L)
 
     companion object {
         private const val PERMISSION_REQUEST_LOCATION = 1001
@@ -107,6 +109,7 @@ class DashboardActivity : AppCompatActivity() {
             LDMSTheme {
                 DashboardScreen(
                 sensors = sensorsState,
+                sensorsUpdatedAt = sensorsUpdatedAt,
                 currentFilter = currentFilterState,
                 onFilterChanged = { f -> currentFilterState = f },
                 onSensorSelected = { sensor ->
@@ -362,28 +365,76 @@ class DashboardActivity : AppCompatActivity() {
         stateList: MutableList<SensorData>,
         onUpdated: ((List<SensorData>) -> Unit)? = null
     ) {
+        // remove any existing listeners
         valueEventListener?.let { database.removeEventListener(it) }
-        valueEventListener = database.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val newList = mutableListOf<SensorData>()
-                for (child in snapshot.children) {
-                    if (child.key?.startsWith("node_") == true) {
-                        val node = child.getValue(SensorData::class.java)
-                        if (node != null) {
-                            if (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName)) {
-                                newList.add(node)
-                            }
+        childEventListener?.let { database.removeEventListener(it) }
+
+        // Use a ChildEventListener for fine-grained updates
+        childEventListener = object : com.google.firebase.database.ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                try {
+                    if (snapshot.key?.startsWith("node_") == true) {
+                        val node = snapshot.getValue(SensorData::class.java)
+                        if (node != null && (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName))) {
+                            // add or replace if present
+                            val idx = stateList.indexOfFirst { it.nodeName == node.nodeName }
+                            if (idx >= 0) stateList[idx] = node else stateList.add(node)
+                            sensorsUpdatedAt = System.currentTimeMillis()
+                            onUpdated?.invoke(stateList.toList())
                         }
                     }
+                } catch (e: Exception) {
+                    Log.e("DashboardActivity", "onChildAdded error: ${e.message}", e)
                 }
-                stateList.clear(); stateList.addAll(newList)
-                onUpdated?.invoke(newList)
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                try {
+                    if (snapshot.key?.startsWith("node_") == true) {
+                        val node = snapshot.getValue(SensorData::class.java)
+                        if (node != null && (userAssignedSensors.isEmpty() || userAssignedSensors.contains(node.nodeName))) {
+                            val idx = stateList.indexOfFirst { it.nodeName == node.nodeName }
+                            if (idx >= 0) {
+                                stateList[idx] = node
+                            } else {
+                                stateList.add(node)
+                            }
+                            sensorsUpdatedAt = System.currentTimeMillis()
+                            onUpdated?.invoke(stateList.toList())
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("DashboardActivity", "onChildChanged error: ${e.message}", e)
+                }
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                try {
+                    if (snapshot.key?.startsWith("node_") == true) {
+                        val node = snapshot.getValue(SensorData::class.java)
+                        val name = node?.nodeName ?: snapshot.key
+                        val idx = stateList.indexOfFirst { it.nodeName == name }
+                        if (idx >= 0) {
+                            stateList.removeAt(idx)
+                            sensorsUpdatedAt = System.currentTimeMillis()
+                            onUpdated?.invoke(stateList.toList())
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("DashboardActivity", "onChildRemoved error: ${e.message}", e)
+                }
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                // not used
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e("DashboardActivity", "Realtime listener cancelled: ${error.message}")
+                Log.e("DashboardActivity", "Child listener cancelled: ${error.message}")
             }
-        })
+        }
+
+        database.addChildEventListener(childEventListener!!)
     }
 
     private fun ensureLocationPermission() {
