@@ -13,6 +13,7 @@ import com.example.mad_cw.R
 import com.example.mad_cw.data.repository.AuthRepository
 import com.example.mad_cw.ui.auth.LoginActivity
 import com.example.mad_cw.ui.compose.SettingsScreen
+import com.example.mad_cw.ui.theme.LDMSTheme
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -27,7 +28,9 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         prefs = getSharedPreferences("LDMS_PREFS", MODE_PRIVATE)
         setContent {
-            SettingsScreen(onBack = { finish() })
+            LDMSTheme {
+                SettingsScreen(onBack = { finish() })
+            }
         }
     }
 
