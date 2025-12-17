@@ -30,9 +30,11 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Tab
+import androidx.compose.material.TabRow
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
@@ -100,6 +102,7 @@ fun DashboardScreen(
     val googleMapState = remember { mutableStateOf<GoogleMap?>(null) }
     val scope = rememberCoroutineScope()
     var hasCameraMovedToSensors by remember { mutableStateOf(false) }
+    var selectedTabIndex by remember { mutableStateOf(0) } // 0 = All, 1 = Favourites
     val scaffoldState = rememberBottomSheetScaffoldState()
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -169,12 +172,16 @@ fun DashboardScreen(
             }
         }
     ) { padding ->
-        // Compute summary values in scope
-        val total = sensors.size
-        val highRisk = sensors.count { levelFor(it) == "High" }
-        val activeAlerts = sensors.count { (it.status ?: "").contains("alert", ignoreCase = true) }
-        val avgTilt = sensors.mapNotNull { it.tilt }.average().takeIf { !it.isNaN() }
-        val avgSoil = sensors.mapNotNull { it.soilMoisture }.average().takeIf { !it.isNaN() }
+        // Base lists for All vs Favourites tab
+        val favouriteSensors = sensors.filter { s -> favorites.contains(s.nodeName ?: "") }
+        val visibleSensors = if (selectedTabIndex == 1) favouriteSensors else sensors
+
+        // Compute summary values for currently visible sensors
+        val total = visibleSensors.size
+        val highRisk = visibleSensors.count { levelFor(it) == "High" }
+        val activeAlerts = visibleSensors.count { (it.status ?: "").contains("alert", ignoreCase = true) }
+        val avgTilt = visibleSensors.mapNotNull { it.tilt }.average().takeIf { !it.isNaN() }
+        val avgSoil = visibleSensors.mapNotNull { it.soilMoisture }.average().takeIf { !it.isNaN() }
 
         Box(Modifier.fillMaxSize()) {
             AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { mv ->
@@ -201,7 +208,7 @@ fun DashboardScreen(
                 }
             }
 
-            // Summary + filters
+            // Tab row + summary + filters
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,6 +216,21 @@ fun DashboardScreen(
                     .padding(12.dp)
                     .statusBarsPadding()
             ) {
+                TabRow(selectedTabIndex = selectedTabIndex, backgroundColor = MaterialTheme.colors.surface) {
+                    Tab(
+                        selected = selectedTabIndex == 0,
+                        onClick = { selectedTabIndex = 0 },
+                        text = { Text("All sensors") }
+                    )
+                    Tab(
+                        selected = selectedTabIndex == 1,
+                        onClick = { selectedTabIndex = 1 },
+                        text = { Text("Favourites") }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Card(elevation = 6.dp) {
                     Row(
                         modifier = Modifier
@@ -270,8 +292,8 @@ fun DashboardScreen(
                 }
             }
 
-            // Update markers when sensors change. Use toList() and sensorsUpdatedAt so any change triggers.
-            LaunchedEffect(sensors.toList(), sensorsUpdatedAt, currentFilter, googleMapState.value, showMyLocation) {
+            // Update markers when sensors or selection change.
+            LaunchedEffect(sensors.toList(), sensorsUpdatedAt, currentFilter, googleMapState.value, showMyLocation, selectedTabIndex, favorites) {
                 val gmap = googleMapState.value
                 if (gmap == null) return@LaunchedEffect
                 withContext(Dispatchers.Main) {
@@ -282,8 +304,16 @@ fun DashboardScreen(
                             try { gmap.isMyLocationEnabled = true } catch (_: SecurityException) {}
                         }
                         gmap.clear()
+
+                        // Choose base list depending on tab, then apply risk filter
+                        val baseList = if (selectedTabIndex == 1) {
+                            sensors.filter { s -> favorites.contains(s.nodeName ?: "") }
+                        } else {
+                            sensors
+                        }
+
                         val filtered =
-                            if (currentFilter == "All") sensors else sensors.filter { levelFor(it) == currentFilter }
+                            if (currentFilter == "All") baseList else baseList.filter { levelFor(it) == currentFilter }
                         for (s in filtered) {
                             val lat = s.latitude
                             val lng = s.longitude
