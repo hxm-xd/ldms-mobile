@@ -506,6 +506,11 @@ class DashboardActivity : AppCompatActivity() {
     private var lastNotifiedSensors: Set<String> = emptySet()
 
     private fun handleNearbyHighThreatSensors(sensors: List<SensorData>) {
+        // Respect user notification preference from settings
+        val prefs = getSharedPreferences("LDMS_PREFS", MODE_PRIVATE)
+        val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
+        if (!notificationsEnabled) return
+
         val currentLocation = lastKnownLocationState ?: return
         val newlyHighAndNearby = sensors.filter { sensor ->
             val name = sensor.nodeName ?: return@filter false

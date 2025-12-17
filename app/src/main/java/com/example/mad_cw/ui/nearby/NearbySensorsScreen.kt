@@ -41,11 +41,13 @@ fun NearbySensorsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
                 },
-                backgroundColor = MaterialTheme.colors.surface,
-                elevation = 4.dp,
+                backgroundColor = MaterialTheme.colors.primary,
+                contentColor = MaterialTheme.colors.onPrimary,
+                elevation = 6.dp,
                 modifier = Modifier.statusBarsPadding()
             )
-        }
+        },
+        backgroundColor = MaterialTheme.colors.background
     ) { padding ->
         if (userLocation == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -60,7 +62,13 @@ fun NearbySensorsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Card(elevation = 6.dp, modifier = Modifier.fillMaxWidth().height(220.dp)) {
+            Card(
+                elevation = 8.dp,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+            ) {
                 val mapView = rememberMapViewWithLifecycle()
                 val mapState = remember { mutableStateOf<GoogleMap?>(null) }
                 AndroidView(factory = { mapView }) { mv ->
@@ -89,9 +97,17 @@ fun NearbySensorsScreen(
                     }
                 }
             }
-            Card(elevation = 6.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("Sensors within 1km", style = MaterialTheme.typography.h6)
+            Card(
+                elevation = 6.dp,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("Sensors within 1km", style = MaterialTheme.typography.h6, color = MaterialTheme.colors.primary)
                     Spacer(Modifier.height(8.dp))
                     if (loading) {
                         // Use a non-animated static indicator to avoid runtime animation API mismatches

@@ -25,6 +25,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +50,8 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
     var displayName by remember { mutableStateOf(user?.displayName ?: "") }
     var email by remember { mutableStateOf(user?.email ?: "Not logged in") }
     var saving by remember { mutableStateOf(false) }
+    var changingPassword by remember { mutableStateOf(false) }
+    var lastPasswordEmailMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         user = authRepository.getCurrentUser()
@@ -57,22 +60,28 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
     }
 
     Scaffold(topBar = {
-        TopAppBar(modifier = Modifier.statusBarsPadding(), title = { Text("Profile") }, navigationIcon = {
-            androidx.compose.material.IconButton(onClick = onNavigateToDashboard) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-            }
-        })
+        TopAppBar(
+            modifier = Modifier.statusBarsPadding(),
+            title = { Text("Profile", color = MaterialTheme.colors.onPrimary) },
+            navigationIcon = {
+                androidx.compose.material.IconButton(onClick = onNavigateToDashboard) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colors.onPrimary)
+                }
+            },
+            backgroundColor = MaterialTheme.colors.primary,
+            elevation = 6.dp
+        )
     }) { padding ->
         Surface(modifier = Modifier
             .fillMaxSize()
-            .padding(padding)) {
+            .padding(padding), color = MaterialTheme.colors.background) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
                     .navigationBarsPadding()
             ) {
-                Card(modifier = Modifier.fillMaxWidth(), elevation = 4.dp) {
+                Card(modifier = Modifier.fillMaxWidth(), elevation = 6.dp, shape = MaterialTheme.shapes.medium) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
                         // Use a supported drawable resource for Compose painterResource
                         runCatching { painterResource(id = R.drawable.ic_landslide) }
@@ -127,6 +136,35 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
                     Text(text = if (saving) "Saving..." else "Save")
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Change password: send reset email to the user's address
+                Button(onClick = {
+                    val targetEmail = user?.email
+                    if (!targetEmail.isNullOrBlank()) {
+                        changingPassword = true
+                        com.google.firebase.auth.FirebaseAuth.getInstance()
+                            .sendPasswordResetEmail(targetEmail)
+                            .addOnCompleteListener { task ->
+                                changingPassword = false
+                                lastPasswordEmailMessage = if (task.isSuccessful) {
+                                    "Password reset email sent to $targetEmail"
+                                } else {
+                                    task.exception?.localizedMessage ?: "Failed to send reset email"
+                                }
+                            }
+                    } else {
+                        lastPasswordEmailMessage = "No email associated with this account"
+                    }
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = if (changingPassword) "Sending reset email..." else "Change password")
+                }
+
+                lastPasswordEmailMessage?.let { msg ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = msg, style = MaterialTheme.typography.caption)
+                }
+
                 Spacer(modifier = Modifier.weight(1f))
 
                 Button(onClick = {
@@ -147,6 +185,20 @@ fun ProfileScreen(authRepository: AuthRepository, onNavigateToDashboard: () -> U
                 }, modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Logout")
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Navigate to settings to control notifications and other options
+                Button(onClick = {
+                    val intent = Intent(context, com.example.mad_cw.ui.settings.SettingsActivity::class.java)
+                    context.startActivity(intent)
+                }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.Settings, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Settings & notifications")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Button(onClick = onNavigateToDashboard, modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Back to Dashboard")

@@ -57,14 +57,15 @@ fun SensorDetailScreen(initial: SensorData, updates: State<SensorData?>, onBack:
     Scaffold(topBar = {
         TopAppBar(
             modifier = Modifier.statusBarsPadding(),
-            title = { Text(current.nodeName ?: "Sensor") },
+            title = { Text(current.nodeName ?: "Sensor", color = MaterialTheme.colors.onPrimary) },
             navigationIcon = {
-            androidx.compose.material.IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-            }
+                androidx.compose.material.IconButton(onClick = onBack) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colors.onPrimary)
+                }
             },
             backgroundColor = MaterialTheme.colors.primary,
-            contentColor = MaterialTheme.colors.onPrimary
+            contentColor = MaterialTheme.colors.onPrimary,
+            elevation = 6.dp
         )
     }) { padding ->
         Surface(

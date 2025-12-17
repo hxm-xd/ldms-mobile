@@ -104,11 +104,16 @@ fun DashboardScreen(
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
+        backgroundColor = MaterialTheme.colors.background,
         sheetContent = {
             if (selectedSensor != null) {
-                Card(modifier = Modifier
-                    .navigationBarsPadding()
-                    .fillMaxWidth(), elevation = 8.dp) {
+                Card(
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .fillMaxWidth(),
+                    elevation = 12.dp,
+                    shape = MaterialTheme.shapes.large
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -119,25 +124,29 @@ fun DashboardScreen(
                             text = selectedSensor.nodeName ?: "Sensor",
                             style = MaterialTheme.typography.h6,
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colors.primary
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Tilt: ${String.format("%.2f", selectedSensor.tilt ?: 0.0)}°",
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.body1
                         )
                         Text(
                             text = "Soil Moisture: ${String.format("%.1f", selectedSensor.soilMoisture ?: 0.0)} %",
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.body1
                         )
                         selectedSensor.rain?.let {
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Rainfall: ${String.format("%.1f", it)} mm",
                                 modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.body1
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
